@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Volume2, VolumeX, Settings, Sun, Moon, Sparkles } from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
 
@@ -44,8 +45,8 @@ export function Header({
     <header className="sticky top-0 z-30 w-full backdrop-blur-md bg-slate-900/90 border-b border-slate-800 px-4 py-3 shadow-md">
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
         {/* Brand */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-xl tracking-tighter">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-xl tracking-tighter group-hover:scale-105 transition-transform">
             खा
           </div>
           <div>
@@ -61,7 +62,7 @@ export function Header({
               {titles[language].sub}
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2">

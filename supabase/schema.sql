@@ -1,10 +1,24 @@
--- BahiKhaata Voice (बहीखाता आवाज़) PostgreSQL Schema for Supabase
--- Run this script in the Supabase SQL Editor (https://supabase.com/dashboard/project/_/sql)
+-- ==============================================================================
+-- BahiKhaata Voice (बहीखाता आवाज़) Production Database Schema for Supabase
+-- Run this script in the Supabase SQL Editor: https://supabase.com/dashboard/project/_/sql
+-- ==============================================================================
 
--- 1. Enable UUID Extension
+-- 1. Enable Required Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Sales Ledger Table (Cash & UPI Income)
+-- 2. User Profiles Table (Synced automatically from Google OAuth & Auth.users)
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    shop_name TEXT DEFAULT 'मेरी दुकान (My Shop)',
+    phone_number TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 3. Sales Ledger Table (Cash & UPI Income)
 CREATE TABLE IF NOT EXISTS public.sales_ledger (
     id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
     vendor_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -17,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.sales_ledger (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 3. Credit Ledger Table (Udhaar Book)
+-- 4. Credit Ledger Table (Udhaar Book)
 CREATE TABLE IF NOT EXISTS public.credit_ledger (
     id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::text,
     vendor_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -33,7 +47,7 @@ CREATE TABLE IF NOT EXISTS public.credit_ledger (
     last_reminder_sent_at TIMESTAMP WITH TIME ZONE
 );
 
--- 4. Daily Closing Summaries Table
+-- 5. Daily Closing Summaries Table
 CREATE TABLE IF NOT EXISTS public.daily_closing (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     vendor_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -46,27 +60,82 @@ CREATE TABLE IF NOT EXISTS public.daily_closing (
     closed_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 5. Enable Row Level Security (RLS)
+-- 6. Enable Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sales_ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credit_ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_closing ENABLE ROW LEVEL SECURITY;
 
--- Anonymous/Public access policies for rapid local deployment
-CREATE POLICY "Public anonymous read access on sales_ledger" ON public.sales_ledger FOR SELECT USING (true);
-CREATE POLICY "Public anonymous insert access on sales_ledger" ON public.sales_ledger FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public anonymous update access on sales_ledger" ON public.sales_ledger FOR UPDATE USING (true);
-CREATE POLICY "Public anonymous delete access on sales_ledger" ON public.sales_ledger FOR DELETE USING (true);
+-- 7. Multi-Tenant RLS Policies (Allows logged in Google/Email users OR guest users)
+-- Profiles Policies
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile" ON public.profiles
+    FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Public anonymous read access on credit_ledger" ON public.credit_ledger FOR SELECT USING (true);
-CREATE POLICY "Public anonymous insert access on credit_ledger" ON public.credit_ledger FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public anonymous update access on credit_ledger" ON public.credit_ledger FOR UPDATE USING (true);
-CREATE POLICY "Public anonymous delete access on credit_ledger" ON public.credit_ledger FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE USING (auth.uid() = id);
 
--- 6. Enable Realtime Replication
+-- Sales Ledger Policies
+DROP POLICY IF EXISTS "Allow users and guests to select sales" ON public.sales_ledger;
+CREATE POLICY "Allow users and guests to select sales" ON public.sales_ledger
+    FOR SELECT USING (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+DROP POLICY IF EXISTS "Allow users and guests to insert sales" ON public.sales_ledger;
+CREATE POLICY "Allow users and guests to insert sales" ON public.sales_ledger
+    FOR INSERT WITH CHECK (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+DROP POLICY IF EXISTS "Allow users and guests to update sales" ON public.sales_ledger;
+CREATE POLICY "Allow users and guests to update sales" ON public.sales_ledger
+    FOR UPDATE USING (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+DROP POLICY IF EXISTS "Allow users and guests to delete sales" ON public.sales_ledger;
+CREATE POLICY "Allow users and guests to delete sales" ON public.sales_ledger
+    FOR DELETE USING (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+-- Credit Ledger Policies
+DROP POLICY IF EXISTS "Allow users and guests to select credit" ON public.credit_ledger;
+CREATE POLICY "Allow users and guests to select credit" ON public.credit_ledger
+    FOR SELECT USING (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+DROP POLICY IF EXISTS "Allow users and guests to insert credit" ON public.credit_ledger;
+CREATE POLICY "Allow users and guests to insert credit" ON public.credit_ledger
+    FOR INSERT WITH CHECK (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+DROP POLICY IF EXISTS "Allow users and guests to update credit" ON public.credit_ledger;
+CREATE POLICY "Allow users and guests to update credit" ON public.credit_ledger
+    FOR UPDATE USING (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+DROP POLICY IF EXISTS "Allow users and guests to delete credit" ON public.credit_ledger;
+CREATE POLICY "Allow users and guests to delete credit" ON public.credit_ledger
+    FOR DELETE USING (auth.uid() = vendor_id OR vendor_id IS NULL);
+
+-- 8. Enable Realtime Replication
 ALTER PUBLICATION supabase_realtime ADD TABLE public.sales_ledger;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.credit_ledger;
 
--- Indexes for lightning fast queries
-CREATE INDEX IF NOT EXISTS idx_sales_created_at ON public.sales_ledger(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_credit_status ON public.credit_ledger(status);
+-- 9. Lightning Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_sales_vendor ON public.sales_ledger(vendor_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_credit_vendor ON public.credit_ledger(vendor_id, status);
 CREATE INDEX IF NOT EXISTS idx_credit_customer ON public.credit_ledger(customer_name);
+
+-- 10. Automatic Profile Creation Trigger on Google OAuth / Auth Signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, email, full_name, avatar_url)
+    VALUES (
+        new.id,
+        new.email,
+        COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', 'दुकानदार'),
+        COALESCE(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', '')
+    )
+    ON CONFLICT (id) DO NOTHING;
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
