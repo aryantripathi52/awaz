@@ -26,6 +26,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'BahiKhaata',
   },
+  other: {
+    google: 'notranslate',
+  },
 };
 
 export default function RootLayout({

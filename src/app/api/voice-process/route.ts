@@ -105,12 +105,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'No audio or transcript received. Please speak clearly into the microphone.',
+          error: 'No audio or transcript received. Please speak clearly into the microphone or configure an API key.',
           rawTranscript: '',
           actions: [],
-          soundboxMessage: 'कृपया साफ आवाज़ में दोबारा बोलें।',
+          soundboxMessage: 'कृपया साफ आवाज़ में दोबारा बोलें या सेटिंग्स में Groq/Gemini Key डालें।',
         },
-        { status: 400 }
+        { status: 200 }
       );
     }
 
@@ -195,7 +195,7 @@ Return ONLY a valid JSON object matching this schema without any markdown format
         actions: [],
         soundboxMessage: 'त्रुटि हुई। कृपया दोबारा प्रयास करें।',
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
