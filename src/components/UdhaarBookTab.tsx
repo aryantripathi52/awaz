@@ -46,11 +46,21 @@ export function UdhaarBookTab({
   };
 
   const handleSendReminder = (entry: CreditEntry) => {
+    let phone = entry.phoneNumber;
+    if (!phone) {
+      const input = prompt(
+        `${entry.customerName} का 10-अंकों का WhatsApp नंबर दर्ज करें (या खाली छोड़कर OK दबाएं ताकि WhatsApp में कॉन्टैक्ट चुन सकें):`,
+        ''
+      );
+      if (input !== null && input.trim()) {
+        phone = input.trim();
+      }
+    }
     const link = generateWhatsAppLink(
       entry.customerName,
       entry.amount,
-      entry.phoneNumber,
-      'बहीखाता'
+      phone,
+      'बहीखाता चाय & जनरल स्टोर'
     );
     window.open(link, '_blank');
   };
