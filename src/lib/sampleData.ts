@@ -1,0 +1,98 @@
+import { CashSale, CreditEntry } from '@/types/ledger';
+
+const defaultDate = '2026-11-14';
+
+export const initialCashSales: CashSale[] = [
+  {
+    id: 'cs-1',
+    amount: 30,
+    description: '2 Special Masala Chai',
+    quantity: 2,
+    unit: 'cup',
+    category: 'chai',
+    paymentMode: 'cash',
+    timestamp: `${defaultDate}T08:15:00.000Z`,
+  },
+  {
+    id: 'cs-2',
+    amount: 50,
+    description: '1 Bun Maska + 1 Chai',
+    quantity: 1,
+    category: 'snacks',
+    paymentMode: 'cash',
+    timestamp: `${defaultDate}T08:42:00.000Z`,
+  },
+  {
+    id: 'cs-3',
+    amount: 40,
+    description: '2 Samosa',
+    quantity: 2,
+    unit: 'plate',
+    category: 'snacks',
+    paymentMode: 'upi',
+    timestamp: `${defaultDate}T09:10:00.000Z`,
+  },
+  {
+    id: 'cs-4',
+    amount: 20,
+    description: 'Bidi bundle',
+    quantity: 1,
+    category: 'cigarettes',
+    paymentMode: 'cash',
+    timestamp: `${defaultDate}T09:35:00.000Z`,
+  },
+  {
+    id: 'cs-5',
+    amount: 60,
+    description: '4 Chai (Office delivery)',
+    quantity: 4,
+    unit: 'cup',
+    category: 'chai',
+    paymentMode: 'cash',
+    timestamp: `${defaultDate}T10:05:00.000Z`,
+  },
+];
+
+export const initialCreditEntries: CreditEntry[] = [
+  {
+    id: 'cr-1',
+    customerName: 'Ramesh',
+    customerIdentifier: '4th street wale',
+    phoneNumber: '9876543210',
+    amount: 40,
+    description: '2 Chai + 1 Parle-G',
+    status: 'pending',
+    timestamp: `${defaultDate}T08:30:00.000Z`,
+  },
+  {
+    id: 'cr-2',
+    customerName: 'Sharma Ji',
+    customerIdentifier: 'Bijli Board',
+    phoneNumber: '9811223344',
+    amount: 150,
+    description: '5 Chai + 5 Samosa meeting order',
+    status: 'pending',
+    timestamp: `${defaultDate}T09:20:00.000Z`,
+  },
+  {
+    id: 'cr-3',
+    customerName: 'Pappu',
+    customerIdentifier: 'Auto Stand Nukkad',
+    phoneNumber: '9988776655',
+    amount: 80,
+    description: 'Chai + Cigarette',
+    status: 'pending',
+    timestamp: `${defaultDate}T07:50:00.000Z`,
+  },
+  {
+    id: 'cr-4',
+    customerName: 'Sunil Tailor',
+    customerIdentifier: 'Opposite Shop',
+    phoneNumber: '9123456789',
+    amount: 50,
+    description: 'Morning tea',
+    status: 'settled',
+    timestamp: `${defaultDate}T08:00:00.000Z`,
+    settledAt: `${defaultDate}T10:15:00.000Z`,
+  },
+];
