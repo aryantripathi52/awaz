@@ -122,12 +122,15 @@ export async function POST(req: NextRequest) {
         const prompt = `You are the AI core for BahiKhaata Voice, a voice-first financial ledger for Indian street vendors (chaiwalas, kirana stores).
 The vendor spoke: "${transcript}"
 
-Extract all financial transactions from this voice note. Vendors frequently speak continuous sentences containing both cash sales and credit (udhaar), or credit repayments.
-For example:
-- "2 chai bechi 20 rupaye ki, aur 4th street wale Ramesh ka 40 rupaye udhaar likh lo" -> 1 cash sale of ₹20, 1 udhaar of ₹40 for customer "Ramesh" with identifier "4th street wale".
-- "Sharma ji ne 100 rupaye jama kar diye" -> 1 udhaar_payment of ₹100 from "Sharma ji".
+Extract all financial transactions from this voice note.
+CRITICAL RULES FOR TRANSACTION TYPES:
+1. "udhaar" (Credit given / pending customer debt): Any mention of "udhaar", "udhar", "baki", "khata", "likh lo", "likho", "udhar diya", "udhar diye", "उधार", "बाकी", "खाता", "उधार दिया", or speech-to-text acoustic errors like "bored given" / "board given" / "udhar given" MUST be categorized as "udhaar"!
+2. "udhaar_payment" (Credit repayment / settlement): Any mention of returning or settling existing debt ("wapas diya", "jama kar diya", "chukaya", "वापस दिया", "जमा किया") MUST be categorized as "udhaar_payment".
+3. "cash_sale" (Direct cash sales / money taken): Only direct cash earnings without any udhaar/credit context ("cash", "nagad", "bechi", "bika", "नकद", "कैश") are "cash_sale".
 
-Return ONLY a valid JSON object matching this schema without any markdown formatting or backticks:
+A single sentence may contain MULTIPLE actions (e.g. "2 chai bechi 20 rupaye ki, aur 4th street wale Ramesh ka 40 rupaye udhaar likh lo" -> 1 cash_sale of ₹20, 1 udhaar of ₹40 for Ramesh).
+
+Return ONLY a valid JSON object matching this schema without markdown or backticks:
 {
   "detected_language": "hindi" | "hinglish" | "english",
   "actions": [
@@ -135,7 +138,7 @@ Return ONLY a valid JSON object matching this schema without any markdown format
       "type": "cash_sale" | "udhaar" | "udhaar_payment",
       "amount": number,
       "description": string,
-      "customerName": string (only for udhaar or udhaar_payment),
+      "customerName": string (for udhaar or udhaar_payment),
       "customerIdentifier": string (e.g. location or shop tag like "4th street wale", "auto stand"),
       "quantity": number,
       "unit": string,
@@ -143,7 +146,7 @@ Return ONLY a valid JSON object matching this schema without any markdown format
       "paymentMode": "cash" | "upi"
     }
   ],
-  "soundboxMessage": string (Concise, friendly confirmation message in Hindi to be spoken by merchant soundbox, e.g. "₹20 नकद प्राप्त हुए, रमेश का ₹40 उधार दर्ज हुआ।")
+  "soundboxMessage": string (Concise confirmation message in Hindi, e.g. "₹20 नकद प्राप्त हुए, रमेश का ₹40 उधार दर्ज हुआ।")
 }`;
 
         const gRes = await fetch(geminiUrl, {

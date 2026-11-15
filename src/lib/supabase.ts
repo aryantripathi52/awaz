@@ -37,7 +37,6 @@ export function getLocalCashSales(): CashSale[] {
 export function saveLocalCashSales(sales: CashSale[]) {
   if (typeof window !== 'undefined') {
     localStorage.setItem(CASH_SALES_KEY, JSON.stringify(sales));
-    window.dispatchEvent(new Event('bahikhaata_data_changed'));
   }
 }
 
@@ -58,7 +57,6 @@ export function getLocalCreditEntries(): CreditEntry[] {
 export function saveLocalCreditEntries(credits: CreditEntry[]) {
   if (typeof window !== 'undefined') {
     localStorage.setItem(CREDIT_LEDGER_KEY, JSON.stringify(credits));
-    window.dispatchEvent(new Event('bahikhaata_data_changed'));
   }
 }
 

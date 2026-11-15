@@ -35,6 +35,7 @@ export function VoiceActionHub({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const speechRecognitionRef = useRef<any>(null);
   const recognizedTextRef = useRef<string>('');
+  const isProcessingRef = useRef<boolean>(false);
 
   // Suggested quick test prompts
   const sampleVoicePrompts = [
@@ -98,6 +99,8 @@ export function VoiceActionHub({
 
   // Send audio/text to processing engine
   const processInput = async (audioBlob?: Blob, fallbackText?: string) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
     setIsProcessing(true);
     setMicPermissionError(false);
 
@@ -180,6 +183,7 @@ export function VoiceActionHub({
         setLastAnnouncement('त्रुटि हुई। कृपया दोबारा बोलें।');
       }
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
       setLiveTranscript('');
       setRecordDuration(0);
@@ -297,7 +301,7 @@ export function VoiceActionHub({
   };
 
   const handleMicClick = () => {
-    if (isProcessing) return;
+    if (isProcessing || isProcessingRef.current) return;
     if (isRecording) {
       stopRecording();
     } else {
@@ -347,7 +351,10 @@ export function VoiceActionHub({
               <button
                 key={idx}
                 translate="no"
-                onClick={() => processInput(undefined, prompt)}
+                onClick={() => {
+                  if (isProcessing || isProcessingRef.current) return;
+                  processInput(undefined, prompt);
+                }}
                 className="notranslate flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-emerald-300 border border-slate-700/80 hover:border-emerald-500/50 transition-all shadow-sm active:scale-95 text-left"
               >
                 &ldquo;{prompt.length > 36 ? prompt.slice(0, 36) + '...' : prompt}&rdquo;

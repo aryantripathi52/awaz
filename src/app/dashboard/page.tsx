@@ -55,13 +55,15 @@ export default function DashboardPage() {
       if (u) setCurrentUser(u);
     });
 
-    // Listen for cross-tab or custom sync events
-    const handleDataChange = () => {
-      setSales(getLocalCashSales());
-      setCredits(getLocalCreditEntries());
+    // Listen for cross-tab storage sync events
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'bahikhaata_cash_sales' || e.key === 'bahikhaata_credit_ledger') {
+        setSales(getLocalCashSales());
+        setCredits(getLocalCreditEntries());
+      }
     };
-    window.addEventListener('bahikhaata_data_changed', handleDataChange);
-    return () => window.removeEventListener('bahikhaata_data_changed', handleDataChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Supabase Real-Time Listener if configured
@@ -130,14 +132,17 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Handle voice recognition result
+  // Handle voice recognition result with batched updates and deduplication
   const handleVoiceProcessed = useCallback((result: VoiceProcessResult) => {
     const now = new Date().toISOString();
+    const newSalesToAdd: CashSale[] = [];
+    const newCreditsToAdd: CreditEntry[] = [];
+    const paymentsToApply: { customerName: string; amount: number }[] = [];
 
     for (const action of result.actions) {
       if (action.type === 'cash_sale') {
-        const newSale: CashSale = {
-          id: `cs-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        newSalesToAdd.push({
+          id: `cs-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           amount: action.amount,
           description: action.description || 'नकद बिक्री',
           quantity: action.quantity || 1,
@@ -145,39 +150,61 @@ export default function DashboardPage() {
           category: action.category || 'chai',
           paymentMode: action.paymentMode || 'cash',
           timestamp: now,
-        };
-
-        setSales((prev) => {
-          const updated = [newSale, ...prev];
-          saveLocalCashSales(updated);
-          return updated;
         });
-        syncCashSaleToDb(newSale);
-        setActiveTab('cash');
       } else if (action.type === 'udhaar') {
-        const newCredit: CreditEntry = {
-          id: `cr-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        newCreditsToAdd.push({
+          id: `cr-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           customerName: action.customerName || 'Grahak',
           customerIdentifier: action.customerIdentifier,
           amount: action.amount,
           description: action.description || 'उधार',
           status: 'pending',
           timestamp: now,
-        };
-
-        setCredits((prev) => {
-          const updated = [newCredit, ...prev];
-          saveLocalCreditEntries(updated);
-          return updated;
         });
-        syncCreditEntryToDb(newCredit);
-        setActiveTab('udhaar');
       } else if (action.type === 'udhaar_payment') {
-        // Settle credit for this customer
-        setCredits((prev) => {
-          const targetName = (action.customerName || '').toLowerCase().trim();
+        paymentsToApply.push({
+          customerName: action.customerName || '',
+          amount: action.amount,
+        });
+      }
+    }
+
+    if (newSalesToAdd.length > 0) {
+      setSales((prev) => {
+        const existingIds = new Set(prev.map((s) => s.id));
+        const uniqueToAdd = newSalesToAdd.filter((s) => !existingIds.has(s.id));
+        if (uniqueToAdd.length === 0) return prev;
+        const next = [...uniqueToAdd, ...prev];
+        saveLocalCashSales(next);
+        return next;
+      });
+      newSalesToAdd.forEach((s) => syncCashSaleToDb(s));
+      setActiveTab('cash');
+    }
+
+    if (newCreditsToAdd.length > 0) {
+      setCredits((prev) => {
+        const existingIds = new Set(prev.map((c) => c.id));
+        const uniqueToAdd = newCreditsToAdd.filter((c) => !existingIds.has(c.id));
+        if (uniqueToAdd.length === 0) return prev;
+        const next = [...uniqueToAdd, ...prev];
+        saveLocalCreditEntries(next);
+        return next;
+      });
+      newCreditsToAdd.forEach((c) => syncCreditEntryToDb(c));
+      setActiveTab('udhaar');
+    }
+
+    if (paymentsToApply.length > 0) {
+      setCredits((prev) => {
+        let changed = false;
+        let updated = [...prev];
+
+        for (const payment of paymentsToApply) {
+          const targetName = payment.customerName.toLowerCase().trim();
           let settledOne = false;
-          const updated = prev.map((entry) => {
+
+          updated = updated.map((entry) => {
             if (
               !settledOne &&
               entry.status === 'pending' &&
@@ -185,6 +212,7 @@ export default function DashboardPage() {
                 targetName.includes(entry.customerName.toLowerCase()))
             ) {
               settledOne = true;
+              changed = true;
               return {
                 ...entry,
                 status: 'settled' as const,
@@ -193,11 +221,14 @@ export default function DashboardPage() {
             }
             return entry;
           });
+        }
+
+        if (changed) {
           saveLocalCreditEntries(updated);
-          return updated;
-        });
-        setActiveTab('udhaar');
-      }
+        }
+        return updated;
+      });
+      setActiveTab('udhaar');
     }
   }, []);
 
