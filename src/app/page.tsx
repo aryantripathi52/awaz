@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Mic, Volume2, Sparkles, ArrowRight, ShieldCheck, CheckCircle2, Smartphone, TrendingUp, Sun, MessageSquare, Coffee, ChevronRight, Zap } from 'lucide-react';
+import { Mic, Volume2, Sparkles, ArrowRight, ShieldCheck, CheckCircle2, Smartphone, TrendingUp, Sun, MessageSquare, Coffee, ChevronRight, Zap, Languages } from 'lucide-react';
 import { parseVoiceIntentLocally } from '@/lib/parser';
 import { soundbox } from '@/lib/soundbox';
 import { VoiceProcessResult } from '@/types/ledger';
@@ -11,6 +11,33 @@ export default function LandingPage() {
   const [demoResult, setDemoResult] = useState<VoiceProcessResult | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [activePrompt, setActivePrompt] = useState<string>('');
+  const [language, setLanguage] = useState<'hinglish' | 'hindi' | 'english'>('hindi');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('bahikhaata_language');
+      if (saved === 'hindi' || saved === 'hinglish' || saved === 'english') {
+        setLanguage(saved);
+      }
+    }
+  }, []);
+
+  const cycleLanguage = () => {
+    const nextLang: 'hinglish' | 'hindi' | 'english' =
+      language === 'hinglish' ? 'hindi' :
+      language === 'hindi' ? 'english' : 'hinglish';
+    setLanguage(nextLang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bahikhaata_language', nextLang);
+    }
+    const msg =
+      nextLang === 'hindi'
+        ? 'भाषा बदली: हिन्दी'
+        : nextLang === 'hinglish'
+        ? 'Language changed to Hinglish'
+        : 'Language changed to English';
+    soundbox.speak(msg, nextLang === 'english' ? 'en-IN' : 'hi-IN');
+  };
 
   const sampleVoicePrompts = [
     '2 chai bechi 20 rupaye ki, aur 4th street wale Ramesh ka 40 rupaye udhaar likh lo',
@@ -53,6 +80,19 @@ export default function LandingPage() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* 1-Tap Language Switch Button */}
+            <button
+              onClick={cycleLanguage}
+              title={`भाषा बदलें / Switch Language (Current: ${language.toUpperCase()})`}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-700 hover:border-emerald-500/50 transition-all active:scale-95 shadow-sm"
+            >
+              <Languages className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="font-semibold">
+                {language === 'hindi' ? 'हिन्दी' : language === 'hinglish' ? 'Hinglish' : 'English'}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">⇄</span>
+            </button>
+
             <Link
               href="/login"
               className="text-xs sm:text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-xl transition-colors"
@@ -105,7 +145,7 @@ export default function LandingPage() {
             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-black text-base px-7 py-3.5 rounded-2xl shadow-xl shadow-emerald-500/25 active:scale-95 transition-all"
           >
             <Mic className="w-5 h-5 stroke-[2.5]" />
-            <span>मुफ्त में शुरू करें (Start Free)</span>
+            <span>मुफ्त में शुरू करें (LOGIN/SIGN UP)</span>
           </Link>
 
           <Link

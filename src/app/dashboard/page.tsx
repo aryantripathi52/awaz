@@ -50,6 +50,11 @@ export default function DashboardPage() {
     setIsMuted(soundbox.getMuted());
     setTodayStr(new Date().toISOString().split('T')[0]);
 
+    if (typeof window !== 'undefined') {
+      const savedLang = localStorage.getItem('bahikhaata_language') as 'hinglish' | 'hindi' | 'english' | null;
+      if (savedLang) setLanguage(savedLang);
+    }
+
     // Check user profile
     getCurrentUser().then((u) => {
       if (u) setCurrentUser(u);

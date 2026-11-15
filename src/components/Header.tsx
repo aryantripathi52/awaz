@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Volume2, VolumeX, Settings, Sun, Moon, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Settings, Sun, Moon, Sparkles, Languages } from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
 
 interface HeaderProps {
@@ -32,6 +32,25 @@ export function Header({
     soundbox.setMuted(next);
     if (!next) {
       soundbox.speak('साउंडबॉक्स चालू है।', 'hi-IN');
+    }
+  };
+
+  const cycleLanguage = () => {
+    const nextLang: 'hinglish' | 'hindi' | 'english' =
+      language === 'hinglish' ? 'hindi' :
+      language === 'hindi' ? 'english' : 'hinglish';
+    setLanguage(nextLang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bahikhaata_language', nextLang);
+    }
+    if (!isMuted) {
+      const msg =
+        nextLang === 'hindi'
+          ? 'भाषा बदली: हिन्दी'
+          : nextLang === 'hinglish'
+          ? 'Language changed to Hinglish'
+          : 'Language changed to English';
+      soundbox.speak(msg, nextLang === 'english' ? 'en-IN' : 'hi-IN');
     }
   };
 
@@ -93,16 +112,18 @@ export function Header({
             {sunlightMode ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* Language Switcher */}
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as 'hinglish' | 'hindi' | 'english')}
-            className="bg-slate-800 text-slate-200 text-xs font-semibold px-2 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-emerald-500"
+          {/* 1-Tap Language Switch Button */}
+          <button
+            onClick={cycleLanguage}
+            title={`भाषा बदलें / Switch Language (Current: ${language.toUpperCase()})`}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 hover:border-emerald-500/50 transition-all active:scale-95 shadow-sm"
           >
-            <option value="hinglish">Hinglish</option>
-            <option value="hindi">हिन्दी</option>
-            <option value="english">English</option>
-          </select>
+            <Languages className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-semibold">
+              {language === 'hindi' ? 'हिन्दी' : language === 'hinglish' ? 'Hinglish' : 'English'}
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">⇄</span>
+          </button>
 
           {/* Dukaan Bandh / Closing Button */}
           <button

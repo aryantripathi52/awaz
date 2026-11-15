@@ -76,7 +76,7 @@ export function CashKamaiTab({
         <div className="p-8 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-400">
           <Coffee className="w-10 h-10 mx-auto mb-2 text-slate-600 animate-bounce" />
           <p className="text-sm font-bold text-slate-300">
-            {language === 'hindi' ? 'अभी कोई नकद बिक्री दर्ज नहीं हुई है' : 'No cash sales recorded yet'}
+            {language === 'hindi' ? 'अभी कोई नकद बिक्री दर्ज नहीं हुई है' : ''}
           </p>
           <p className="text-xs text-slate-500 mt-1">
             {language === 'hindi'
