@@ -4,13 +4,14 @@ import React, { useState } from 'react';
 import { X, PlusCircle, Check } from 'lucide-react';
 import { CashSale, CreditEntry } from '@/types/ledger';
 import { soundbox } from '@/lib/soundbox';
+import { translations, Language } from '@/lib/translations';
 
 interface QuickManualAddModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddCashSale: (sale: CashSale) => void;
   onAddCreditEntry: (entry: CreditEntry) => void;
-  language: 'hinglish' | 'hindi' | 'english';
+  language: Language;
 }
 
 export function QuickManualAddModal({
@@ -28,46 +29,56 @@ export function QuickManualAddModal({
   const [phoneNumber, setPhoneNumber] = useState('');
   const [category, setCategory] = useState<CashSale['category']>('chai');
 
+  const t = translations[language].manualAddModal;
+  const voiceLang = language === 'english' ? 'en-IN' : 'hi-IN';
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
-      alert('कृपया सही राशि दर्ज करें');
+      alert(t.amountAlert);
       return;
     }
 
     const now = new Date().toISOString();
 
     if (entryType === 'cash') {
+      const defaultDesc = language === 'english' ? 'Cash sale' : 'नकद बिक्री';
       const newSale: CashSale = {
         id: `cs-${Date.now()}`,
         amount: numAmount,
-        description: description.trim() || 'नकद बिक्री',
+        description: description.trim() || defaultDesc,
         category: category,
         paymentMode: 'cash',
         timestamp: now,
       };
       onAddCashSale(newSale);
-      soundbox.speak(`₹${numAmount} नकद प्राप्त हुए।`, 'hi-IN');
+      const msg = language === 'english' ? `Received ₹${numAmount} in cash.` : `₹${numAmount} नकद प्राप्त हुए।`;
+      soundbox.speak(msg, voiceLang);
     } else {
       if (!customerName.trim()) {
-        alert('कृपया ग्राहक का नाम लिखें');
+        alert(t.customerNameAlert);
         return;
       }
+      const defaultDesc = language === 'english' ? 'Credit recorded' : 'उधार';
       const newCredit: CreditEntry = {
         id: `cr-${Date.now()}`,
         customerName: customerName.trim(),
         customerIdentifier: customerIdentifier.trim() || undefined,
         phoneNumber: phoneNumber.trim() || undefined,
         amount: numAmount,
-        description: description.trim() || 'उधार',
+        description: description.trim() || defaultDesc,
         status: 'pending',
         timestamp: now,
       };
       onAddCreditEntry(newCredit);
-      soundbox.speak(`${customerName} का ₹${numAmount} उधार दर्ज हुआ।`, 'hi-IN');
+      const msg =
+        language === 'english'
+          ? `Recorded ₹${numAmount} credit for ${customerName}.`
+          : `${customerName} का ₹${numAmount} उधार दर्ज हुआ।`;
+      soundbox.speak(msg, voiceLang);
     }
 
     onClose();
@@ -85,7 +96,7 @@ export function QuickManualAddModal({
 
         <h2 className="text-lg font-black text-white tracking-tight mb-4 flex items-center gap-2">
           <PlusCircle className="w-5 h-5 text-emerald-400" />
-          <span>{language === 'hindi' ? 'हाथ से नया हिसाब जोड़ें' : 'Quick Manual Entry'}</span>
+          <span>{t.title}</span>
         </h2>
 
         {/* Type Toggle */}
@@ -99,7 +110,7 @@ export function QuickManualAddModal({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            {language === 'hindi' ? '💵 नकद बिक्री (Cash)' : '💵 Cash Sale'}
+            {t.typeCash}
           </button>
           <button
             type="button"
@@ -110,7 +121,7 @@ export function QuickManualAddModal({
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            {language === 'hindi' ? '📝 उधार खाता (Udhaar)' : '📝 Udhaar Credit'}
+            {t.typeCredit}
           </button>
         </div>
 
@@ -118,7 +129,7 @@ export function QuickManualAddModal({
           {/* Amount */}
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1">
-              {language === 'hindi' ? 'रुपये (Amount in ₹) *' : 'Amount (₹) *'}
+              {t.amountLabel}
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg font-black text-slate-400">
@@ -140,14 +151,14 @@ export function QuickManualAddModal({
             <>
               <div>
                 <label className="text-xs font-bold text-slate-300 block mb-1">
-                  {language === 'hindi' ? 'ग्राहक का नाम (Customer Name) *' : 'Customer Name *'}
+                  {t.customerNameLabel}
                 </label>
                 <input
                   type="text"
                   required
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="उदा. Ramesh, Sharma Ji"
+                  placeholder={t.customerNamePlaceholder}
                   className="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
@@ -155,19 +166,19 @@ export function QuickManualAddModal({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs font-bold text-slate-300 block mb-1">
-                    पहचान / पता (Tag)
+                    {t.tagLabel}
                   </label>
                   <input
                     type="text"
                     value={customerIdentifier}
                     onChange={(e) => setCustomerIdentifier(e.target.value)}
-                    placeholder="उदा. 4th street, Nukkad"
+                    placeholder={t.tagPlaceholder}
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-300 block mb-1">
-                    मोबाइल नंबर (WhatsApp)
+                    {t.phoneLabel}
                   </label>
                   <input
                     type="tel"
@@ -184,13 +195,13 @@ export function QuickManualAddModal({
           {/* Item Description */}
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1">
-              विवरण / सामान (Items Description)
+              {t.descriptionLabel}
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="उदा. 2 chai, 1 samosa"
+              placeholder={t.descriptionPlaceholder}
               className="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
             />
           </div>
@@ -199,19 +210,19 @@ export function QuickManualAddModal({
           {entryType === 'cash' && (
             <div>
               <label className="text-xs font-bold text-slate-300 block mb-1">
-                कैटेगरी (Category)
+                {t.categoryLabel}
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as CashSale['category'])}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
               >
-                <option value="chai">चाय (Chai / Tea)</option>
-                <option value="snacks">नाश्ता (Samosa / Snacks)</option>
-                <option value="cigarettes">बीड़ी / सिगरेट (Cigarettes)</option>
-                <option value="beverages">पेय पदार्थ (Cold Drinks / Milk)</option>
-                <option value="grocery">किराना (Grocery)</option>
-                <option value="other">अन्य (Other)</option>
+                <option value="chai">{t.categories.chai}</option>
+                <option value="snacks">{t.categories.snacks}</option>
+                <option value="cigarettes">{t.categories.cigarettes}</option>
+                <option value="beverages">{t.categories.beverages}</option>
+                <option value="grocery">{t.categories.grocery}</option>
+                <option value="other">{t.categories.other}</option>
               </select>
             </div>
           )}
@@ -222,7 +233,7 @@ export function QuickManualAddModal({
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95"
             >
               <Check className="w-4 h-4 stroke-[3]" />
-              <span>दर्ज करें (Save Entry)</span>
+              <span>{t.submitBtn}</span>
             </button>
           </div>
         </form>

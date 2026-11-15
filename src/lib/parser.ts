@@ -102,14 +102,20 @@ function extractAmountAndQuantity(clause: string): { amount: number; quantity: n
  * - Udhaar payments (wapas, jama, chukaya)
  * - Cash sales (money taken / cash kamai)
  */
-export function parseVoiceIntentLocally(rawText: string): VoiceProcessResult {
+export function parseVoiceIntentLocally(
+  rawText: string,
+  targetLang: 'hinglish' | 'hindi' | 'english' = 'hindi'
+): VoiceProcessResult {
   const cleanInput = rawText.trim();
   if (!cleanInput) {
     return {
       success: false,
       rawTranscript: '',
       actions: [],
-      soundboxMessage: 'कोई आवाज़ सुनाई नहीं दी। कृपया फिर से बोलें।',
+      soundboxMessage:
+        targetLang === 'english'
+          ? 'No voice detected. Please speak again.'
+          : 'कोई आवाज़ सुनाई नहीं दी। कृपया फिर से बोलें।',
       error: 'Empty voice input',
     };
   }
@@ -145,7 +151,7 @@ export function parseVoiceIntentLocally(rawText: string): VoiceProcessResult {
 
     if (isPayment) {
       // Extract customer name
-      let customerName = 'Grahak';
+      let customerName = targetLang === 'english' ? 'Customer' : 'Grahak';
       const nameMatch = clause.match(/(?:ne\s+|ka\s+|से\s+|का\s+)?([A-Za-z\u0900-\u097F]+(?:\s+ji|\s+bhai|\s+जी|\s+भाई)?)\s*(?:ne|ka|ने|का|se|से)?/i);
       if (nameMatch) {
         const cleaned = nameMatch[1].replace(/\b(?:ne|ka|se|ko|jama|rupaye|\d+|ने|का|से|को|जमा|रुपये)\b/gi, '').trim();
@@ -156,14 +162,14 @@ export function parseVoiceIntentLocally(rawText: string): VoiceProcessResult {
         type: 'udhaar_payment',
         amount: amount || 50,
         customerName: customerName,
-        description: 'उधार जमा (Credit Repaid)',
+        description: targetLang === 'english' ? 'Credit payment received' : 'उधार जमा (Credit Repaid)',
         paymentMode: 'cash',
       });
       continue;
     }
 
     if (isUdhaar) {
-      let customerName = 'Grahak';
+      let customerName = targetLang === 'english' ? 'Customer' : 'Grahak';
       let customerIdentifier = '';
 
       // Check for location tag like "...wale", "...shop", "...stand", "...वाले"
@@ -194,7 +200,7 @@ export function parseVoiceIntentLocally(rawText: string): VoiceProcessResult {
         amount: amount || 40,
         customerName: customerName.charAt(0).toUpperCase() + customerName.slice(1),
         customerIdentifier: customerIdentifier || undefined,
-        description: 'उधार खाता दर्ज',
+        description: targetLang === 'english' ? 'Credit recorded' : 'उधार खाता दर्ज',
       });
       continue;
     }
@@ -206,10 +212,13 @@ export function parseVoiceIntentLocally(rawText: string): VoiceProcessResult {
       .replace(/[^\w\s\u0900-\u097F]/gi, '')
       .trim();
 
+    const descFallback =
+      targetLang === 'english' ? `${category.toUpperCase()} sale` : `${category.toUpperCase()} बिक्री`;
+
     parsedActions.push({
       type: 'cash_sale',
       amount: amount || 20,
-      description: cleanDesc ? cleanDesc.charAt(0).toUpperCase() + cleanDesc.slice(1) : `${category.toUpperCase()} बिक्री`,
+      description: cleanDesc ? cleanDesc.charAt(0).toUpperCase() + cleanDesc.slice(1) : descFallback,
       quantity: quantity,
       category: category,
       paymentMode: clause.toLowerCase().includes('upi') || clause.includes('ऑनलाइन') ? 'upi' : 'cash',
@@ -227,24 +236,35 @@ export function parseVoiceIntentLocally(rawText: string): VoiceProcessResult {
     });
   }
 
-  // Generate soundbox speech in natural, reassuring Hindi
+  // Generate soundbox speech in selected language
   const speechParts: string[] = [];
   for (const act of parsedActions) {
-    if (act.type === 'cash_sale') {
-      speechParts.push(`₹${act.amount} नकद प्राप्त हुए`);
-    } else if (act.type === 'udhaar') {
-      speechParts.push(`${act.customerName} का ₹${act.amount} उधार दर्ज हुआ`);
-    } else if (act.type === 'udhaar_payment') {
-      speechParts.push(`${act.customerName} से ₹${act.amount} उधार जमा हुआ`);
+    if (targetLang === 'english') {
+      if (act.type === 'cash_sale') {
+        speechParts.push(`₹${act.amount} cash received`);
+      } else if (act.type === 'udhaar') {
+        speechParts.push(`Recorded ₹${act.amount} credit for ${act.customerName}`);
+      } else if (act.type === 'udhaar_payment') {
+        speechParts.push(`Received ₹${act.amount} credit payment from ${act.customerName}`);
+      }
+    } else {
+      if (act.type === 'cash_sale') {
+        speechParts.push(`₹${act.amount} नकद प्राप्त हुए`);
+      } else if (act.type === 'udhaar') {
+        speechParts.push(`${act.customerName} का ₹${act.amount} उधार दर्ज हुआ`);
+      } else if (act.type === 'udhaar_payment') {
+        speechParts.push(`${act.customerName} से ₹${act.amount} उधार जमा हुआ`);
+      }
     }
   }
 
-  const soundboxMessage = speechParts.join('। ') + '।';
+  const delimiter = targetLang === 'english' ? '. ' : '। ';
+  const soundboxMessage = speechParts.join(delimiter) + (targetLang === 'english' ? '.' : '।');
 
   return {
     success: true,
     rawTranscript: cleanInput,
-    detectedLanguage: 'hinglish',
+    detectedLanguage: targetLang,
     actions: parsedActions,
     soundboxMessage,
   };

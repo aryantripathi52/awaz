@@ -3,19 +3,24 @@
 import React, { useState, useEffect } from 'react';
 import { X, Key, Database, MessageSquare, Volume2, Save, RotateCcw, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
+import { translations, Language } from '@/lib/translations';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onResetData: () => void;
+  language?: Language;
 }
 
-export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, onResetData, language = 'hindi' }: SettingsModalProps) {
   const [geminiKey, setGeminiKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [supabaseAnonKey, setSupabaseAnonKey] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  const t = translations[language].settingsModal;
+  const voiceLang = language === 'english' ? 'en-IN' : 'hi-IN';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -36,7 +41,7 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
       localStorage.setItem('bahikhaata_supabase_anon_key', supabaseAnonKey.trim());
     }
     setSavedSuccess(true);
-    soundbox.speak('सेटिंग्स सुरक्षित हो गई हैं।', 'hi-IN');
+    soundbox.speak(t.saveSuccess, voiceLang);
     setTimeout(() => {
       setSavedSuccess(false);
       onClose();
@@ -44,7 +49,7 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
   };
 
   const handleTestSoundbox = () => {
-    soundbox.speak('बहीखाता साउंडबॉक्स परीक्षण सफल रहा। ₹100 प्राप्त हुए।', 'hi-IN');
+    soundbox.speak(t.testSpeech, voiceLang);
   };
 
   return (
@@ -63,10 +68,10 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
           </div>
           <div>
             <h2 className="text-xl font-black text-white tracking-tight">
-              सेटिंग्स & API कॉन्फ़िगरेशन
+              {t.title}
             </h2>
             <p className="text-xs text-slate-400">
-              Configure Groq Whisper, Google Gemini & Supabase credentials
+              {t.subtitle}
             </p>
           </div>
         </div>
@@ -75,7 +80,7 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
         <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 mb-5 flex items-start gap-2.5">
           <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-emerald-300/90 leading-relaxed">
-            <strong>शून्य कॉन्फ़िगरेशन तैयार:</strong> यदि आप कोई API Key नहीं डालते हैं, तो भी ऐप बिल्ट-इन हिंदी/हिंग्लिश NLP पार्सर और ब्राउज़र स्पीच इंजन से 100% कार्य करेगा!
+            <strong>{t.offlineBadge}</strong> {t.offlineDesc}
           </p>
         </div>
 
@@ -83,14 +88,14 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
           {/* Groq Whisper API Key */}
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center justify-between">
-              <span>Groq Cloud API Key (Whisper Large V3 STT)</span>
+              <span>{t.groqLabel}</span>
               <a
                 href="https://console.groq.com/keys"
                 target="_blank"
                 rel="noreferrer"
                 className="text-[11px] text-cyan-400 hover:underline"
               >
-                Get Free Key ↗
+                {t.groqLink}
               </a>
             </label>
             <input
@@ -105,14 +110,14 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
           {/* Google Gemini API Key */}
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center justify-between">
-              <span>Google Gemini API Key (1.5 / 2.0 Flash Intent Parser)</span>
+              <span>{t.geminiLabel}</span>
               <a
                 href="https://aistudio.google.com/app/apikey"
                 target="_blank"
                 rel="noreferrer"
                 className="text-[11px] text-cyan-400 hover:underline"
               >
-                Get Free Key ↗
+                {t.geminiLink}
               </a>
             </label>
             <input
@@ -128,7 +133,7 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1.5 flex items-center gap-1.5">
               <Database className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Supabase Project URL (Optional Realtime Sync)</span>
+              <span>{t.supabaseUrlLabel}</span>
             </label>
             <input
               type="text"
@@ -142,7 +147,7 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
           {/* Supabase Anon Key */}
           <div>
             <label className="text-xs font-bold text-slate-300 block mb-1.5">
-              Supabase Anon Public Key
+              {t.supabaseAnonLabel}
             </label>
             <input
               type="password"
@@ -160,7 +165,7 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
               className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-xs font-bold text-emerald-400 flex items-center justify-center gap-2 transition-colors"
             >
               <Volume2 className="w-4 h-4" />
-              <span>साउंडबॉक्स आवाज़ टेस्ट करें (Test Soundbox Audio)</span>
+              <span>{t.soundboxTestBtn}</span>
             </button>
           </div>
 
@@ -168,16 +173,16 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
           <div>
             <button
               onClick={() => {
-                if (confirm('क्या आप डेमो डेटा को रीसेट करना चाहते हैं?')) {
+                if (confirm(t.resetConfirm)) {
                   onResetData();
-                  soundbox.speak('डेमो डेटा रीसेट हो गया है।', 'hi-IN');
+                  soundbox.speak(language === 'english' ? 'Ledger data reset.' : 'डेमो डेटा रीसेट हो गया है।', voiceLang);
                   onClose();
                 }
               }}
               className="w-full py-2 px-3 rounded-xl bg-rose-950/30 hover:bg-rose-950/50 border border-rose-800/40 text-xs font-semibold text-rose-300 flex items-center justify-center gap-2 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>डेमो डेटा रीसेट करें (Reset Sample Ledger Data)</span>
+              <span>{t.resetBtn}</span>
             </button>
           </div>
         </div>
@@ -192,12 +197,12 @@ export function SettingsModal({ isOpen, onClose, onResetData }: SettingsModalPro
             {savedSuccess ? (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                <span>सुरक्षित हो गया (Saved!)</span>
+                <span>{t.saveSuccess}</span>
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>सेटिंग्स सेव करें (Save Settings)</span>
+                <span>{t.saveBtn}</span>
               </>
             )}
           </button>

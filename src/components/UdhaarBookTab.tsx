@@ -5,12 +5,13 @@ import { CreditEntry } from '@/types/ledger';
 import { generateWhatsAppLink } from '@/lib/whatsapp';
 import { CheckCircle2, Clock, MapPin, Send, Trash2, Search, Check, RefreshCw } from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
+import { translations, Language } from '@/lib/translations';
 
 interface UdhaarBookTabProps {
   creditEntries: CreditEntry[];
   onSettleCredit: (id: string) => void;
   onDeleteCredit: (id: string) => void;
-  language: 'hinglish' | 'hindi' | 'english';
+  language: Language;
   sunlightMode: boolean;
 }
 
@@ -23,6 +24,7 @@ export function UdhaarBookTab({
 }: UdhaarBookTabProps) {
   const [filter, setFilter] = useState<'all' | 'pending' | 'settled'>('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const t = translations[language].tabs;
 
   const filtered = creditEntries.filter((entry) => {
     if (filter !== 'all' && entry.status !== filter) return false;
@@ -42,25 +44,30 @@ export function UdhaarBookTab({
 
   const handleSettle = (entry: CreditEntry) => {
     onSettleCredit(entry.id);
-    soundbox.speak(`${entry.customerName} से ₹${entry.amount} उधार जमा हो गया।`, 'hi-IN');
+    const speech =
+      language === 'english'
+        ? `Settled ₹${entry.amount} credit payment from ${entry.customerName}.`
+        : `${entry.customerName} से ₹${entry.amount} उधार जमा हो गया।`;
+    soundbox.speak(speech, language === 'english' ? 'en-IN' : 'hi-IN');
   };
 
   const handleSendReminder = (entry: CreditEntry) => {
     let phone = entry.phoneNumber;
     if (!phone) {
       const input = prompt(
-        `${entry.customerName} का 10-अंकों का WhatsApp नंबर दर्ज करें (या खाली छोड़कर OK दबाएं ताकि WhatsApp में कॉन्टैक्ट चुन सकें):`,
+        `${entry.customerName}: ${t.phonePrompt}`,
         ''
       );
       if (input !== null && input.trim()) {
         phone = input.trim();
       }
     }
+    const storeName = language === 'english' ? 'BahiKhaata Store' : 'बहीखाता चाय & जनरल स्टोर';
     const link = generateWhatsAppLink(
       entry.customerName,
       entry.amount,
       phone,
-      'बहीखाता चाय & जनरल स्टोर'
+      storeName
     );
     window.open(link, '_blank');
   };
@@ -81,13 +88,13 @@ export function UdhaarBookTab({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
         <div>
           <h2 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-            <span>{language === 'hindi' ? 'उधार खाता (क्रेडिट बुक)' : 'Udhaar Book'}</span>
+            <span>{t.udhaarTitle}</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 font-bold border border-amber-600/30">
-              ₹{totalPending} {language === 'hindi' ? 'बाकी' : 'pending'}
+              ₹{totalPending} {t.udhaarPendingCount}
             </span>
           </h2>
           <p className="text-xs text-slate-400">
-            {language === 'hindi' ? 'ग्राहकों का बकाया और वसूली' : 'Customer credit & settlements'}
+            {t.udhaarSubtitle}
           </p>
         </div>
 
@@ -101,7 +108,7 @@ export function UdhaarBookTab({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {language === 'hindi' ? 'बाकी (Pending)' : 'Pending'}
+            {t.filterPending}
           </button>
           <button
             onClick={() => setFilter('settled')}
@@ -111,7 +118,7 @@ export function UdhaarBookTab({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {language === 'hindi' ? 'जमा (Settled)' : 'Settled'}
+            {t.filterSettled}
           </button>
           <button
             onClick={() => setFilter('all')}
@@ -121,7 +128,7 @@ export function UdhaarBookTab({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {language === 'hindi' ? 'सभी (All)' : 'All'}
+            {t.filterAll}
           </button>
         </div>
       </div>
@@ -133,11 +140,7 @@ export function UdhaarBookTab({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={
-            language === 'hindi'
-              ? 'ग्राहक का नाम या पता खोजें (उदा. Ramesh, 4th street)...'
-              : 'Search customer name or tag (e.g. Ramesh, 4th street)...'
-          }
+          placeholder={t.searchPlaceholder}
           className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
         />
       </div>
@@ -147,12 +150,10 @@ export function UdhaarBookTab({
         <div className="p-8 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-400">
           <Clock className="w-10 h-10 mx-auto mb-2 text-slate-600 animate-pulse" />
           <p className="text-sm font-bold text-slate-300">
-            {language === 'hindi' ? 'कोई उधार खाता नहीं मिला' : 'No credit entries found'}
+            {t.udhaarEmptyTitle}
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            {language === 'hindi'
-              ? 'माइक से बोलें: "रमेश का 40 रुपये उधार लिख लो"'
-              : 'Say into mic: "Ramesh 4th street 40 udhaar"'}
+            {t.udhaarEmptyInstruction}
           </p>
         </div>
       ) : (
@@ -193,7 +194,7 @@ export function UdhaarBookTab({
                             : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         }`}
                       >
-                        {isPending ? (language === 'hindi' ? 'बाकी' : 'Pending') : (language === 'hindi' ? 'जमा' : 'Settled')}
+                        {isPending ? t.statusPending : t.statusSettled}
                       </span>
                     </div>
 
@@ -207,7 +208,7 @@ export function UdhaarBookTab({
                         <>
                           <span>•</span>
                           <span className="text-emerald-400">
-                            {language === 'hindi' ? 'जमा हुआ:' : 'Settled:'} {formatDate(entry.settledAt)}
+                            {t.settledAtPrefix} {formatDate(entry.settledAt)}
                           </span>
                         </>
                       )}
@@ -236,12 +237,12 @@ export function UdhaarBookTab({
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 transition-transform active:scale-95"
                       >
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        {language === 'hindi' ? 'जमा करें (Paid)' : 'Settle / Paid'}
+                        {t.settleBtn}
                       </button>
                     ) : (
                       <span className="flex items-center gap-1 text-xs font-bold text-emerald-400">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        {language === 'hindi' ? 'हिसाब चुकता' : 'Full Payment Received'}
+                        {t.settledFull}
                       </span>
                     )}
 
@@ -253,7 +254,7 @@ export function UdhaarBookTab({
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 font-bold text-xs border border-emerald-500/40 transition-transform active:scale-95"
                       >
                         <Send className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>{language === 'hindi' ? 'तकाज़ा (WhatsApp)' : 'Send Reminder'}</span>
+                        <span>{t.reminderBtn}</span>
                       </button>
                     )}
                   </div>

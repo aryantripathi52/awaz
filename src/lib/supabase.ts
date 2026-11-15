@@ -28,7 +28,14 @@ export function getLocalCashSales(): CashSale[] {
       localStorage.setItem(CASH_SALES_KEY, JSON.stringify(initialCashSales));
       return initialCashSales;
     }
-    return JSON.parse(data);
+    const parsed: CashSale[] = JSON.parse(data);
+    // Deduplicate by ID to prevent React key conflicts
+    const seen = new Set<string>();
+    return parsed.filter((s) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
   } catch {
     return initialCashSales;
   }
@@ -48,7 +55,14 @@ export function getLocalCreditEntries(): CreditEntry[] {
       localStorage.setItem(CREDIT_LEDGER_KEY, JSON.stringify(initialCreditEntries));
       return initialCreditEntries;
     }
-    return JSON.parse(data);
+    const parsed: CreditEntry[] = JSON.parse(data);
+    // Deduplicate by ID to prevent React key conflicts
+    const seen = new Set<string>();
+    return parsed.filter((c) => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
   } catch {
     return initialCreditEntries;
   }

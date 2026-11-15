@@ -2,20 +2,31 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Mic, Volume2, Sparkles, ArrowRight, ShieldCheck, CheckCircle2, Smartphone, TrendingUp, Sun, MessageSquare, Coffee, ChevronRight, Zap, Languages } from 'lucide-react';
+import {
+  Mic,
+  Volume2,
+  Sparkles,
+  ArrowRight,
+  Sun,
+  MessageSquare,
+  ChevronRight,
+  Zap,
+  Languages,
+} from 'lucide-react';
 import { parseVoiceIntentLocally } from '@/lib/parser';
 import { soundbox } from '@/lib/soundbox';
 import { VoiceProcessResult } from '@/types/ledger';
+import { translations, Language } from '@/lib/translations';
 
 export default function LandingPage() {
   const [demoResult, setDemoResult] = useState<VoiceProcessResult | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [activePrompt, setActivePrompt] = useState<string>('');
-  const [language, setLanguage] = useState<'hinglish' | 'hindi' | 'english'>('hindi');
+  const [language, setLanguage] = useState<Language>('hindi');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bahikhaata_language');
+      const saved = localStorage.getItem('bahikhaata_language') as Language | null;
       if (saved === 'hindi' || saved === 'hinglish' || saved === 'english') {
         setLanguage(saved);
       }
@@ -23,12 +34,13 @@ export default function LandingPage() {
   }, []);
 
   const cycleLanguage = () => {
-    const nextLang: 'hinglish' | 'hindi' | 'english' =
+    const nextLang: Language =
       language === 'hinglish' ? 'hindi' :
       language === 'hindi' ? 'english' : 'hinglish';
     setLanguage(nextLang);
     if (typeof window !== 'undefined') {
       localStorage.setItem('bahikhaata_language', nextLang);
+      window.dispatchEvent(new CustomEvent('bahikhaata_language_changed', { detail: nextLang }));
     }
     const msg =
       nextLang === 'hindi'
@@ -39,12 +51,8 @@ export default function LandingPage() {
     soundbox.speak(msg, nextLang === 'english' ? 'en-IN' : 'hi-IN');
   };
 
-  const sampleVoicePrompts = [
-    '2 chai bechi 20 rupaye ki, aur 4th street wale Ramesh ka 40 rupaye udhaar likh lo',
-    'Sharma ji ne 150 rupaye wapas jama kar diye',
-    '50 rupaye cash aaya subah ke samose ka',
-    'Pappu auto wale ka 80 rupaye udhaar likho',
-  ];
+  const t = translations[language].landing;
+  const sampleVoicePrompts = translations[language].voiceHub.samplePrompts;
 
   const handleSimulateVoice = (promptText: string) => {
     setActivePrompt(promptText);
@@ -52,10 +60,10 @@ export default function LandingPage() {
     setDemoResult(null);
 
     setTimeout(() => {
-      const result = parseVoiceIntentLocally(promptText);
+      const result = parseVoiceIntentLocally(promptText, language);
       setDemoResult(result);
       setIsSimulating(false);
-      soundbox.speak(result.soundboxMessage, 'hi-IN');
+      soundbox.speak(result.soundboxMessage, language === 'english' ? 'en-IN' : 'hi-IN');
     }, 400);
   };
 
@@ -72,10 +80,12 @@ export default function LandingPage() {
               <span className="text-lg font-black text-white tracking-tight flex items-center gap-1.5">
                 BahiKhaata
                 <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30">
-                  आवाज़
+                  {language === 'english' ? 'Voice' : 'आवाज़'}
                 </span>
               </span>
-              <p className="text-[10px] text-slate-400 font-medium">हाथ खाली, हिसाब पक्का</p>
+              <p className="text-[10px] text-slate-400 font-medium">
+                {language === 'english' ? 'Hands Free, Perfect Books' : 'हाथ खाली, हिसाब पक्का'}
+              </p>
             </div>
           </Link>
 
@@ -83,7 +93,7 @@ export default function LandingPage() {
             {/* 1-Tap Language Switch Button */}
             <button
               onClick={cycleLanguage}
-              title={`भाषा बदलें / Switch Language (Current: ${language.toUpperCase()})`}
+              title={`Switch Language (Current: ${language.toUpperCase()})`}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-850 text-slate-200 border border-slate-700 hover:border-emerald-500/50 transition-all active:scale-95 shadow-sm"
             >
               <Languages className="w-3.5 h-3.5 text-cyan-400" />
@@ -97,14 +107,14 @@ export default function LandingPage() {
               href="/login"
               className="text-xs sm:text-sm font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-xl transition-colors"
             >
-              लॉगिन (Login)
+              {t.navLogin}
             </Link>
 
             <Link
               href="/dashboard"
               className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm px-4 py-2 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
             >
-              <span>बहीखाता खोलें</span>
+              <span>{t.navOpen}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -120,22 +130,20 @@ export default function LandingPage() {
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-emerald-500/30 shadow-inner mb-6 animate-in fade-in">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
           <span className="text-xs font-bold text-emerald-300 tracking-wide">
-            भारत के चायवालों और छोटे व्यापारियों के लिए पहला वॉइस बहीखाता
+            {t.badge}
           </span>
         </div>
 
         {/* Main Punchy Tagline */}
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-[1.15] mb-6">
-          हाथ में छलनी, <br className="hidden sm:inline" />
+          {t.heroH1Line1} <br className="hidden sm:inline" />
           <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-            मुँह से हिसाब पक्का!
+            {t.heroH1Gradient}
           </span>
         </h1>
 
         <p className="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
-          अब व्यस्त दुकान में गंदे या गीले हाथों से मोबाइल टाइप करने की जरूरत नहीं। 
-          सीधे हिंदी या हिंग्लिश में बोलें—AI नकद बिक्री और उधारी अलग करेगा, 
-          और <strong>साउंडबॉक्स आवाज़ देकर पुष्टि</strong> करेगा!
+          {t.heroDesc}
         </p>
 
         {/* Hero CTAs */}
@@ -145,12 +153,12 @@ export default function LandingPage() {
             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 hover:from-emerald-400 hover:to-cyan-300 text-slate-950 font-black text-base px-7 py-3.5 rounded-2xl shadow-xl shadow-emerald-500/25 active:scale-95 transition-all"
           >
             <Mic className="w-5 h-5 stroke-[2.5]" />
-            <span>मुफ्त में शुरू करें (LOGIN/SIGN UP)</span>
+            <span>{t.ctaDashboard}</span>
           </Link>
 
           <Link
             href="/login"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold text-base px-6 py-3.5 rounded-2xl border border-slate-700/80 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-850 text-slate-200 font-bold text-base px-6 py-3.5 rounded-2xl border border-slate-700/80 transition-all"
           >
             {/* Google Icon */}
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -159,7 +167,7 @@ export default function LandingPage() {
               <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
               <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
             </svg>
-            <span>Google से लॉगिन करें</span>
+            <span>{t.ctaGoogle}</span>
           </Link>
         </div>
 
@@ -168,9 +176,9 @@ export default function LandingPage() {
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-emerald-400" />
-              लाइव टेस्ट करें (Click to Test Live AI Voice Parsing):
+              {t.simTitle}
             </span>
-            <span className="text-[11px] text-slate-500 font-semibold">आवाज़ सुनें 🔊</span>
+            <span className="text-[11px] text-slate-500 font-semibold">{t.simListen}</span>
           </div>
 
           {/* Prompt Chips */}
@@ -195,7 +203,7 @@ export default function LandingPage() {
             {isSimulating ? (
               <div className="flex items-center gap-2 text-xs text-cyan-400">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                <span>AI आवाज़ समझ रहा है... (Parsing speech & separating intent...)</span>
+                <span>{t.simAnalyzing}</span>
               </div>
             ) : demoResult ? (
               <div className="space-y-2 animate-in fade-in">
@@ -217,10 +225,10 @@ export default function LandingPage() {
                     >
                       <span>
                         {act.type === 'cash_sale'
-                          ? `💵 नकद: ₹${act.amount} (${act.description})`
+                          ? `💵 ${language === 'english' ? 'Cash' : 'नकद'}: ₹${act.amount} (${act.description})`
                           : act.type === 'udhaar'
-                          ? `📝 उधार: ${act.customerName} ₹${act.amount} ${act.customerIdentifier ? `[${act.customerIdentifier}]` : ''}`
-                          : `🔄 जमा: ${act.customerName} ₹${act.amount}`}
+                          ? `📝 ${language === 'english' ? 'Credit' : 'उधार'}: ${act.customerName} ₹${act.amount} ${act.customerIdentifier ? `[${act.customerIdentifier}]` : ''}`
+                          : `🔄 ${language === 'english' ? 'Settled' : 'जमा'}: ${act.customerName} ₹${act.amount}`}
                       </span>
                     </div>
                   ))}
@@ -228,7 +236,7 @@ export default function LandingPage() {
               </div>
             ) : (
               <p className="text-xs text-slate-500 text-center">
-                ऊपर किसी भी वाक्य पर क्लिक करें और देखें कि AI कैसे एक ही वाक्य से नकद और उधार को अलग-अलग दर्ज करता है!
+                {t.simEmpty}
               </p>
             )}
           </div>
@@ -240,10 +248,10 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-              छोटे दुकानदारों के लिए क्यों ज़रूरी है?
+              {t.pillarsTitle}
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 mt-2">
-              पारंपरिक कॉपी-किताब और जटिल ऐप्स की कमियों को दूर करने के लिए बनाया गया
+              {t.pillarsSubtitle}
             </p>
           </div>
 
@@ -253,9 +261,9 @@ export default function LandingPage() {
               <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3">
                 <Mic className="w-5 h-5" />
               </div>
-              <h3 className="font-extrabold text-base text-white mb-1">शून्य टाइपिंग (Zero Typing)</h3>
+              <h3 className="font-extrabold text-base text-white mb-1">{t.p1Title}</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                चाहे हाथ में चाय का बर्तन हो या समोसे का तेल, सिर्फ एक बार बोलें और हिसाब तुरंत दर्ज हो जाएगा।
+                {t.p1Desc}
               </p>
             </div>
 
@@ -264,9 +272,9 @@ export default function LandingPage() {
               <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-3">
                 <Volume2 className="w-5 h-5" />
               </div>
-              <h3 className="font-extrabold text-base text-white mb-1">मर्चेंट साउंडबॉक्स पुष्टि</h3>
+              <h3 className="font-extrabold text-base text-white mb-1">{t.p2Title}</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                पेटीएम/फोनपे जैसा अलर्ट टोन और हिंदी में बोलकर पुष्टि, ताकि स्क्रीन देखने की भी ज़रूरत न पड़े।
+                {t.p2Desc}
               </p>
             </div>
 
@@ -275,9 +283,9 @@ export default function LandingPage() {
               <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-3">
                 <MessageSquare className="w-5 h-5" />
               </div>
-              <h3 className="font-extrabold text-base text-white mb-1">1-टैप व्हाट्सएप तकाज़ा</h3>
+              <h3 className="font-extrabold text-base text-white mb-1">{t.p3Title}</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                बिना झिझक ग्राहक को सम्मानजनक रिमाइंडर भेजें। आपके सामान्य व्हाट्सएप से सीधा लिंक खुलता है।
+                {t.p3Desc}
               </p>
             </div>
 
@@ -286,9 +294,9 @@ export default function LandingPage() {
               <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center mb-3">
                 <Sun className="w-5 h-5" />
               </div>
-              <h3 className="font-extrabold text-base text-white mb-1">धूप मोड (Sunlight Mode)</h3>
+              <h3 className="font-extrabold text-base text-white mb-1">{t.p4Title}</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                सड़क पर सीधी तेज़ धूप में भी साफ दिखने वाला हाई-कंट्रास्ट ब्लैक और नियॉन डिस्प्ले।
+                {t.p4Desc}
               </p>
             </div>
           </div>
@@ -299,32 +307,30 @@ export default function LandingPage() {
       <section className="px-4 py-16 max-w-4xl mx-auto w-full">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            पुरानी लाल डायरी बनाम बहीखाता आवाज़
+            {t.compTitle}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-6 rounded-2xl bg-rose-950/20 border border-rose-900/40">
             <h3 className="font-extrabold text-rose-300 text-base mb-3 flex items-center gap-2">
-              <span>❌ पुरानी कागज़ की डायरी</span>
+              <span>{t.diaryTitle}</span>
             </h3>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li>• पन्ने फटना, भीगना या खो जाने का डर</li>
-              <li>• भीड़ में लिखने का समय न मिलना और हिसाब भूलना</li>
-              <li>• शाम को घंटों बैठकर कुल जोड़ लगाना</li>
-              <li>• ग्राहक से तकाज़ा मांगने में संकोच होना</li>
+              {t.diaryItems.map((item, idx) => (
+                <li key={idx}>• {item}</li>
+              ))}
             </ul>
           </div>
 
           <div className="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/40">
             <h3 className="font-extrabold text-emerald-300 text-base mb-3 flex items-center gap-2">
-              <span>✅ बहीखाता आवाज़ (BahiKhaata Voice)</span>
+              <span>{t.voiceTitle}</span>
             </h3>
             <ul className="space-y-2 text-xs text-emerald-200/90 font-medium">
-              <li>• सिर्फ बोलें, २ सेकंड में हिसाब पक्का दर्ज</li>
-              <li>• साउंडबॉक्स तुरंत आवाज़ देकर बताएगा</li>
-              <li>• शाम को &ldquo;दुकान बंद&rdquo; दबाते ही गल्ले का सटीक हिसाब</li>
-              <li>• १-टैप में व्हाट्सएप पर विनम्र उधारी तकाज़ा संदेश</li>
+              {t.voiceItems.map((item, idx) => (
+                <li key={idx}>• {item}</li>
+              ))}
             </ul>
           </div>
         </div>
@@ -334,20 +340,20 @@ export default function LandingPage() {
       <section className="px-4 py-12 mt-auto bg-gradient-to-t from-slate-900 to-slate-950 border-t border-slate-800 text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
-            आज ही अपनी दुकान का हिसाब डिजिटल करें
+            {t.footerCtaTitle}
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mb-6">
-            शून्य सेटअप • किसी कठिन ट्रेनिंग की ज़रूरत नहीं • सीधा इस्तेमाल शुरू करें
+            {t.footerCtaSubtitle}
           </p>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400 text-slate-950 font-black text-sm sm:text-base px-8 py-3.5 rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-transform"
           >
-            <span>बहीखाता शुरू करें (Open BahiKhaata)</span>
+            <span>{t.footerCtaBtn}</span>
             <ChevronRight className="w-5 h-5 stroke-[2.5]" />
           </Link>
           <p className="text-[11px] text-slate-500 mt-6">
-            © 2026 BahiKhaata Voice • मेड विद ❤️ फ़ॉर इंडियाज़ माइक्रो-इकोनॉमी
+            {t.footerCopyright}
           </p>
         </div>
       </section>

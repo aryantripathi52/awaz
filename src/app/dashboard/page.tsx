@@ -25,13 +25,14 @@ import { getCurrentUser, signOut } from '@/lib/auth';
 import { CashSale, CreditEntry, VoiceProcessResult } from '@/types/ledger';
 import { Plus, Coffee, BookOpen, LogOut, User as UserIcon } from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
+import { translations, Language } from '@/lib/translations';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [sales, setSales] = useState<CashSale[]>([]);
   const [credits, setCredits] = useState<CreditEntry[]>([]);
   const [activeTab, setActiveTab] = useState<'cash' | 'udhaar'>('cash');
-  const [language, setLanguage] = useState<'hinglish' | 'hindi' | 'english'>('hinglish');
+  const [language, setLanguage] = useState<Language>('hinglish');
   const [sunlightMode, setSunlightMode] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [todayStr, setTodayStr] = useState<string>('');
@@ -51,7 +52,7 @@ export default function DashboardPage() {
     setTodayStr(new Date().toISOString().split('T')[0]);
 
     if (typeof window !== 'undefined') {
-      const savedLang = localStorage.getItem('bahikhaata_language') as 'hinglish' | 'hindi' | 'english' | null;
+      const savedLang = localStorage.getItem('bahikhaata_language') as Language | null;
       if (savedLang) setLanguage(savedLang);
     }
 
@@ -65,10 +66,28 @@ export default function DashboardPage() {
       if (e.key === 'bahikhaata_cash_sales' || e.key === 'bahikhaata_credit_ledger') {
         setSales(getLocalCashSales());
         setCredits(getLocalCreditEntries());
+      } else if (e.key === 'bahikhaata_language') {
+        const newLang = e.newValue as Language;
+        if (newLang === 'hindi' || newLang === 'hinglish' || newLang === 'english') {
+          setLanguage(newLang);
+        }
       }
     };
+
+    // Listen for in-app language switch events
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent<Language>;
+      if (customEvent.detail) {
+        setLanguage(customEvent.detail);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('bahikhaata_language_changed', handleLangChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('bahikhaata_language_changed', handleLangChange);
+    };
   }, []);
 
   // Supabase Real-Time Listener if configured
@@ -316,6 +335,8 @@ export default function DashboardPage() {
     .filter((c) => c.status === 'settled' && (!todayStr || (c.settledAt && c.settledAt.startsWith(todayStr))))
     .reduce((sum, c) => sum + c.amount, 0);
 
+  const t = translations[language];
+
   return (
     <div
       className={`min-h-screen transition-colors duration-300 flex flex-col ${
@@ -343,23 +364,23 @@ export default function DashboardPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="text-slate-400">
               {currentUser
-                ? `${currentUser.user_metadata?.full_name || currentUser.fullName || currentUser.email} (${currentUser.user_metadata?.shop_name || currentUser.shopName || 'दुकान'})`
-                : 'अतिथि मोड (Guest Mode) • डेटा डिवाइस पर सुरक्षित'}
+                ? `${currentUser.user_metadata?.full_name || currentUser.fullName || currentUser.email} (${currentUser.user_metadata?.shop_name || currentUser.shopName || (language === 'english' ? 'Shop' : 'दुकान')})`
+                : t.nav.guestModeText}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <Link href="/" className="text-slate-400 hover:text-emerald-400 transition-colors">
-              होम (Home)
+              {t.nav.home}
             </Link>
             {currentUser ? (
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1 text-slate-400 hover:text-rose-400 transition-colors"
-                title="लॉगआउट करें"
+                title={t.nav.logout}
               >
                 <LogOut className="w-3 h-3" />
-                <span>लॉगआउट</span>
+                <span>{t.nav.logout}</span>
               </button>
             ) : (
               <Link
@@ -367,7 +388,7 @@ export default function DashboardPage() {
                 className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
               >
                 <UserIcon className="w-3 h-3" />
-                <span>लॉगिन करें</span>
+                <span>{t.nav.login}</span>
               </Link>
             )}
           </div>
@@ -400,7 +421,7 @@ export default function DashboardPage() {
               }`}
             >
               <Coffee className="w-4 h-4" />
-              <span>{language === 'hindi' ? 'नकद कमाई' : 'Cash Kamai'}</span>
+              <span>{t.tabs.cashTab}</span>
             </button>
 
             <button
@@ -412,7 +433,7 @@ export default function DashboardPage() {
               }`}
             >
               <BookOpen className="w-4 h-4" />
-              <span>{language === 'hindi' ? 'उधार खाता' : 'Udhaar Book'}</span>
+              <span>{t.tabs.udhaarTab}</span>
             </button>
           </div>
 
@@ -420,11 +441,11 @@ export default function DashboardPage() {
           <button
             onClick={() => setIsManualAddOpen(true)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold transition-all shadow-sm active:scale-95"
-            title="Manual Entry"
+            title={t.tabs.quickAdd}
           >
             <Plus className="w-4 h-4 text-emerald-400" />
             <span className="hidden xs:inline">
-              {language === 'hindi' ? 'हाथ से लिखें' : 'Quick Add'}
+              {t.tabs.quickAdd}
             </span>
           </button>
         </div>
@@ -471,6 +492,7 @@ export default function DashboardPage() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onResetData={handleResetData}
+        language={language}
       />
 
       <QuickManualAddModal

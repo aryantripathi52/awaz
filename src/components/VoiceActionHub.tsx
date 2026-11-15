@@ -5,10 +5,11 @@ import { Mic, Square, Loader2, Sparkles, Volume2, AlertCircle } from 'lucide-rea
 import { soundbox } from '@/lib/soundbox';
 import { VoiceProcessResult } from '@/types/ledger';
 import { parseVoiceIntentLocally } from '@/lib/parser';
+import { translations, Language } from '@/lib/translations';
 
 interface VoiceActionHubProps {
   onVoiceProcessed: (result: VoiceProcessResult) => void;
-  language: 'hinglish' | 'hindi' | 'english';
+  language: Language;
   sunlightMode: boolean;
 }
 
@@ -37,13 +38,8 @@ export function VoiceActionHub({
   const recognizedTextRef = useRef<string>('');
   const isProcessingRef = useRef<boolean>(false);
 
-  // Suggested quick test prompts
-  const sampleVoicePrompts = [
-    '2 chai bechi 20 rupaye ki, aur 4th street wale Ramesh ka 40 rupaye udhaar likh lo',
-    'Sharma ji ko 150 ka udhaar diya',
-    'Pappu ne 80 rupaye jama kar diye',
-    'Subah ki 70 rupaye ki samosa aur bidi cash bika',
-  ];
+  const t = translations[language].voiceHub;
+  const sampleVoicePrompts = t.samplePrompts;
 
   // Visualizer drawing loop
   const drawVisualizer = useCallback(() => {
@@ -153,34 +149,41 @@ export function VoiceActionHub({
       }
 
       // Check if server succeeded
+      const voiceLang = language === 'english' ? 'en-IN' : 'hi-IN';
       if (result && result.success && result.actions && result.actions.length > 0) {
         setLastAnnouncement(result.soundboxMessage);
         onVoiceProcessed(result);
-        soundbox.speak(result.soundboxMessage, 'hi-IN');
+        soundbox.speak(result.soundboxMessage, voiceLang);
       } else if (spokenText) {
         // High-intelligence local parser fallback
-        const localResult = parseVoiceIntentLocally(spokenText);
+        const localResult = parseVoiceIntentLocally(spokenText, language);
         if (localResult.success && localResult.actions.length > 0) {
           setLastAnnouncement(localResult.soundboxMessage);
           onVoiceProcessed(localResult);
-          soundbox.speak(localResult.soundboxMessage, 'hi-IN');
+          soundbox.speak(localResult.soundboxMessage, voiceLang);
         } else {
-          setLastAnnouncement('कृपया दोबारा स्पष्ट बोलें।');
-          soundbox.speak('कृपया साफ आवाज़ में दोबारा बोलें।', 'hi-IN');
+          const failMsg = language === 'english' ? 'Please speak clearly again.' : 'कृपया दोबारा स्पष्ट बोलें।';
+          setLastAnnouncement(failMsg);
+          soundbox.speak(failMsg, voiceLang);
         }
       } else {
-        setLastAnnouncement(result?.soundboxMessage || 'कोई आवाज़ सुनाई नहीं दी।');
-        soundbox.speak('कोई आवाज़ सुनाई नहीं दी। दोबारा प्रयास करें।', 'hi-IN');
+        const noVoiceMsg =
+          language === 'english'
+            ? 'No voice detected. Please try again.'
+            : result?.soundboxMessage || 'कोई आवाज़ सुनाई नहीं दी।';
+        setLastAnnouncement(noVoiceMsg);
+        soundbox.speak(noVoiceMsg, voiceLang);
       }
     } catch (err) {
       console.warn('Network error during voice processing, using local parser:', err);
+      const voiceLang = language === 'english' ? 'en-IN' : 'hi-IN';
       if (spokenText) {
-        const fallbackResult = parseVoiceIntentLocally(spokenText);
+        const fallbackResult = parseVoiceIntentLocally(spokenText, language);
         setLastAnnouncement(fallbackResult.soundboxMessage);
         onVoiceProcessed(fallbackResult);
-        soundbox.speak(fallbackResult.soundboxMessage, 'hi-IN');
+        soundbox.speak(fallbackResult.soundboxMessage, voiceLang);
       } else {
-        setLastAnnouncement('त्रुटि हुई। कृपया दोबारा बोलें।');
+        setLastAnnouncement(language === 'english' ? 'Error. Please speak again.' : 'त्रुटि हुई। कृपया दोबारा बोलें।');
       }
     } finally {
       isProcessingRef.current = false;
@@ -259,7 +262,7 @@ export function VoiceActionHub({
       if (SpeechRecognition) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const recognition = new (SpeechRecognition as any)();
-        recognition.lang = 'hi-IN';
+        recognition.lang = language === 'english' ? 'en-IN' : 'hi-IN';
         recognition.continuous = true;
         recognition.interimResults = true;
 
@@ -326,7 +329,7 @@ export function VoiceActionHub({
           >
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <span>माइक की अनुमति नहीं मिली। कृपया एड्रेस बार में 🔒 या 🎙️ पर &quot;Allow&quot; करें।</span>
+              <span>{t.micErrorText}</span>
             </div>
             <button
               onClick={() => setMicPermissionError(false)}
@@ -345,7 +348,7 @@ export function VoiceActionHub({
               className="notranslate text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 flex-shrink-0"
             >
               <Sparkles className="w-3 h-3 text-emerald-400" />
-              बोल कर देखें:
+              {t.tryLabel}
             </span>
             {sampleVoicePrompts.map((prompt, idx) => (
               <button
@@ -357,7 +360,7 @@ export function VoiceActionHub({
                 }}
                 className="notranslate flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-emerald-300 border border-slate-700/80 hover:border-emerald-500/50 transition-all shadow-sm active:scale-95 text-left"
               >
-                &ldquo;{prompt.length > 36 ? prompt.slice(0, 36) + '...' : prompt}&rdquo;
+                &ldquo;{prompt.length > 40 ? prompt.slice(0, 40) + '...' : prompt}&rdquo;
               </button>
             ))}
           </div>
@@ -377,7 +380,7 @@ export function VoiceActionHub({
             ) : isProcessing ? (
               <span key="processing-view" className="flex items-center gap-2 text-cyan-300">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>AI हिसाब का विश्लेषण कर रहा है...</span>
+                <span>{t.subtextAnalyzing}</span>
               </span>
             ) : (
               <span key="announcement-view" className="flex items-center gap-1.5 text-slate-300">
@@ -438,7 +441,7 @@ export function VoiceActionHub({
               <React.Fragment key="btn-idle">
                 <Mic className="w-8 h-8 text-slate-950 stroke-[2.5]" />
                 <span className="text-[9px] font-black tracking-wider uppercase mt-0.5 text-slate-950">
-                  {language === 'hindi' ? 'बोलिए' : 'Speak'}
+                  {t.speakBtn}
                 </span>
               </React.Fragment>
             )}
@@ -450,12 +453,10 @@ export function VoiceActionHub({
             className="notranslate text-[11px] font-semibold text-slate-400 mt-1.5 tracking-wide"
           >
             {isRecording
-              ? 'पूरा होने पर दबाएं (Tap to Stop)'
+              ? t.subtextRecording
               : isProcessing
-              ? 'हिसाब तैयार हो रहा है...'
-              : language === 'hindi'
-              ? 'बटन दबाकर बोलें • जैसे: "2 चाय 20 नकद, रमेश 40 उधार"'
-              : 'Tap & Speak • e.g. "2 chai 20 cash, Ramesh 40 udhaar"'}
+              ? t.analyzing
+              : t.subtextIdle}
           </p>
         </div>
       </div>

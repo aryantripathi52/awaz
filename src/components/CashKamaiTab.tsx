@@ -3,11 +3,12 @@
 import React from 'react';
 import { CashSale } from '@/types/ledger';
 import { Coffee, Cookie, Cigarette, Milk, ShoppingBag, Trash2, Smartphone, Banknote } from 'lucide-react';
+import { translations, Language } from '@/lib/translations';
 
 interface CashKamaiTabProps {
   sales: CashSale[];
   onDeleteSale: (id: string) => void;
-  language: 'hinglish' | 'hindi' | 'english';
+  language: Language;
   sunlightMode: boolean;
 }
 
@@ -17,6 +18,7 @@ export function CashKamaiTab({
   language,
   sunlightMode,
 }: CashKamaiTabProps) {
+  const t = translations[language].tabs;
   const getCategoryIcon = (category: CashSale['category']) => {
     switch (category) {
       case 'chai':
@@ -51,19 +53,19 @@ export function CashKamaiTab({
       <div className="flex items-center justify-between px-1">
         <div>
           <h2 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
-            <span>{language === 'hindi' ? 'नकद कमाई की सूची' : 'Cash Kamai Ledger'}</span>
+            <span>{t.cashTitle}</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold border border-slate-700">
-              {sales.length} {language === 'hindi' ? 'बिक्री' : 'entries'}
+              {sales.length} {t.cashEntriesCount}
             </span>
           </h2>
           <p className="text-xs text-slate-400">
-            {language === 'hindi' ? 'आज की कुल नकद और UPI बिक्री' : 'Daily itemized sales & revenue'}
+            {t.cashSubtitle}
           </p>
         </div>
 
         <div className="text-right">
           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-            {language === 'hindi' ? 'कुल नकद' : 'Total Cash'}
+            {t.totalCashLabel}
           </span>
           <span className="text-xl sm:text-2xl font-black text-emerald-400">
             ₹{totalAmount.toLocaleString('en-IN')}
@@ -76,12 +78,10 @@ export function CashKamaiTab({
         <div className="p-8 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-400">
           <Coffee className="w-10 h-10 mx-auto mb-2 text-slate-600 animate-bounce" />
           <p className="text-sm font-bold text-slate-300">
-            {language === 'hindi' ? 'अभी कोई नकद बिक्री दर्ज नहीं हुई है' : ''}
+            {t.cashEmptyTitle}
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            {language === 'hindi'
-              ? 'नीचे माइक बटन दबाएं और बोलें, जैसे: "२ चाय बीस रुपये की"'
-              : 'Tap the mic below and say: "2 chai 20 rupaye cash"'}
+            {t.cashEmptyInstruction}
           </p>
         </div>
       ) : (

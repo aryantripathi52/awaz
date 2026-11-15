@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { IndianRupee, TrendingUp, AlertCircle, Wallet } from 'lucide-react';
+import { translations, Language } from '@/lib/translations';
 
 interface MetricCardsProps {
   totalCash: number;
   todayUdhaar: number;
   totalMarketUdhaar: number;
   recoveredUdhaarToday: number;
-  language: 'hinglish' | 'hindi' | 'english';
+  language: Language;
   sunlightMode: boolean;
   onSelectTab: (tab: 'cash' | 'udhaar') => void;
 }
@@ -23,32 +24,7 @@ export function MetricCards({
   onSelectTab,
 }: MetricCardsProps) {
   const gallaInHand = totalCash + recoveredUdhaarToday;
-
-  const labels = {
-    hinglish: {
-      cash: 'Aaj Ki Kamai',
-      todayUdhaar: 'Aaj Ka Udhaar',
-      marketUdhaar: 'Kul Market Udhaar',
-      galla: 'Galla (Cash In Hand)',
-      recovered: 'Wapas Aaya',
-    },
-    hindi: {
-      cash: 'आज की नकद कमाई',
-      todayUdhaar: 'आज का नया उधार',
-      marketUdhaar: 'कुल बाज़ार उधारी',
-      galla: 'गल्ला (नकद हाथ में)',
-      recovered: 'उधार वसूली',
-    },
-    english: {
-      cash: "Today's Cash",
-      todayUdhaar: "Today's Credit",
-      marketUdhaar: 'Total Market Credit',
-      galla: 'Cash in Drawer',
-      recovered: 'Credit Recovered',
-    },
-  };
-
-  const l = labels[language];
+  const m = translations[language].metrics;
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 w-full">
@@ -63,7 +39,7 @@ export function MetricCards({
       >
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {l.cash}
+            {m.todayCash}
           </span>
           <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
             <TrendingUp className="w-4 h-4" />
@@ -77,7 +53,7 @@ export function MetricCards({
         </div>
         <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          नकद + ऑनलाइन बिक्री
+          {m.todayCashSub}
         </p>
       </div>
 
@@ -92,7 +68,7 @@ export function MetricCards({
       >
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {l.todayUdhaar}
+            {m.todayUdhaar}
           </span>
           <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
             <AlertCircle className="w-4 h-4" />
@@ -106,7 +82,7 @@ export function MetricCards({
         </div>
         <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-          आज दिया गया उधार
+          {m.todayUdhaarSub}
         </p>
       </div>
 
@@ -121,7 +97,7 @@ export function MetricCards({
       >
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {l.marketUdhaar}
+            {m.marketUdhaar}
           </span>
           <div className="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
             <IndianRupee className="w-4 h-4" />
@@ -134,7 +110,7 @@ export function MetricCards({
           </span>
         </div>
         <p className="text-[11px] text-rose-400/80 mt-1">
-          बाज़ार से लेना बाकी है
+          {m.marketUdhaarSub}
         </p>
       </div>
 
@@ -148,7 +124,7 @@ export function MetricCards({
       >
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            {l.galla}
+            {m.galla}
           </span>
           <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
             <Wallet className="w-4 h-4" />
@@ -161,7 +137,7 @@ export function MetricCards({
           </span>
         </div>
         <p className="text-[11px] text-slate-400 mt-1">
-          {l.recovered}: ₹{recoveredUdhaarToday}
+          {m.recovered}: ₹{recoveredUdhaarToday}
         </p>
       </div>
     </div>

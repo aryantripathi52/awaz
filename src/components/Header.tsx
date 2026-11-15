@@ -4,10 +4,11 @@ import React from 'react';
 import Link from 'next/link';
 import { Volume2, VolumeX, Settings, Sun, Moon, Sparkles, Languages } from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
+import { translations, Language } from '@/lib/translations';
 
 interface HeaderProps {
-  language: 'hinglish' | 'hindi' | 'english';
-  setLanguage: (lang: 'hinglish' | 'hindi' | 'english') => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
   sunlightMode: boolean;
   setSunlightMode: (val: boolean) => void;
   isMuted: boolean;
@@ -36,12 +37,13 @@ export function Header({
   };
 
   const cycleLanguage = () => {
-    const nextLang: 'hinglish' | 'hindi' | 'english' =
+    const nextLang: Language =
       language === 'hinglish' ? 'hindi' :
       language === 'hindi' ? 'english' : 'hinglish';
     setLanguage(nextLang);
     if (typeof window !== 'undefined') {
       localStorage.setItem('bahikhaata_language', nextLang);
+      window.dispatchEvent(new CustomEvent('bahikhaata_language_changed', { detail: nextLang }));
     }
     if (!isMuted) {
       const msg =
@@ -54,11 +56,7 @@ export function Header({
     }
   };
 
-  const titles = {
-    hinglish: { app: 'BahiKhaata', sub: 'आवाज़ से हिसाब', closing: 'Dukaan Bandh' },
-    hindi: { app: 'बहीखाता', sub: 'बोलकर हिसाब रखें', closing: 'दुकान बंद' },
-    english: { app: 'BahiKhaata', sub: 'Voice Ledger', closing: 'Day Close' },
-  };
+  const t = translations[language];
 
   return (
     <header className="sticky top-0 z-30 w-full backdrop-blur-md bg-slate-900/90 border-b border-slate-800 px-4 py-3 shadow-md">
@@ -71,14 +69,14 @@ export function Header({
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="text-lg font-black tracking-tight text-white flex items-center gap-1">
-                {titles[language].app}
+                {t.common.appName}
                 <span className="text-emerald-400 font-extrabold text-xs px-1.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/30">
-                  आवाज़
+                  {t.common.badge}
                 </span>
               </h1>
             </div>
             <p className="text-[11px] font-medium text-slate-400 tracking-wide">
-              {titles[language].sub}
+              {t.common.tagline}
             </p>
           </div>
         </Link>
@@ -96,7 +94,7 @@ export function Header({
             }`}
           >
             {!isMuted ? <Volume2 className="w-3.5 h-3.5 text-emerald-400 animate-pulse" /> : <VolumeX className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{!isMuted ? 'Soundbox ON' : 'Mute'}</span>
+            <span className="hidden sm:inline">{!isMuted ? t.nav.soundboxOn : t.nav.soundboxMute}</span>
           </button>
 
           {/* Sunlight Mode Toggle */}
@@ -115,7 +113,7 @@ export function Header({
           {/* 1-Tap Language Switch Button */}
           <button
             onClick={cycleLanguage}
-            title={`भाषा बदलें / Switch Language (Current: ${language.toUpperCase()})`}
+            title={`Language: ${language.toUpperCase()}`}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 hover:border-emerald-500/50 transition-all active:scale-95 shadow-sm"
           >
             <Languages className="w-3.5 h-3.5 text-cyan-400" />
@@ -131,13 +129,13 @@ export function Header({
             className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs shadow-md shadow-orange-500/20 transition-transform active:scale-95"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">{titles[language].closing}</span>
+            <span className="hidden xs:inline">{t.nav.closingBtn}</span>
           </button>
 
           {/* Settings */}
           <button
             onClick={onOpenSettings}
-            title="Settings & API Keys"
+            title={t.nav.settingsTooltip}
             className="p-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition-colors"
           >
             <Settings className="w-4 h-4" />
