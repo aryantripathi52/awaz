@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Volume2, VolumeX, Settings, Sun, Moon, Sparkles, Languages } from 'lucide-react';
+import { Volume2, VolumeX, Sun, Moon, Sparkles, Languages, User } from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
 import { translations, Language } from '@/lib/translations';
 
@@ -132,13 +132,14 @@ export function Header({
             <span className="hidden xs:inline">{t.nav.closingBtn}</span>
           </button>
 
-          {/* Settings */}
+          {/* Profile & Logout */}
           <button
             onClick={onOpenSettings}
             title={t.nav.settingsTooltip}
-            className="p-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition-colors"
+            aria-label="Profile and Logout"
+            className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-800 text-slate-200 border border-slate-700 hover:border-emerald-500/50 hover:bg-slate-750 transition-all active:scale-95 shadow-sm"
           >
-            <Settings className="w-4 h-4" />
+            <User className="w-4 h-4 text-emerald-400" />
           </button>
         </div>
       </div>

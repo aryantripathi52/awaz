@@ -119,20 +119,24 @@ export interface Translations {
   settingsModal: {
     title: string;
     subtitle: string;
+    profileInfo: string;
+    shopNameLabel: string;
+    shopNamePlaceholder: string;
+    emailLabel: string;
+    accountTypeLabel: string;
+    guestBadge: string;
+    cloudBadge: string;
     offlineBadge: string;
     offlineDesc: string;
-    groqLabel: string;
-    groqLink: string;
-    geminiLabel: string;
-    geminiLink: string;
-    supabaseUrlLabel: string;
-    supabaseAnonLabel: string;
     soundboxTestBtn: string;
     testSpeech: string;
     resetBtn: string;
     resetConfirm: string;
     saveBtn: string;
     saveSuccess: string;
+    logoutBtn: string;
+    loginBtn: string;
+    logoutSuccess: string;
   };
   landing: {
     navLogin: string;
@@ -208,7 +212,7 @@ export const translations: Record<Language, Translations> = {
       soundboxOn: 'साउंडबॉक्स चालू',
       soundboxMute: 'म्यूट',
       closingBtn: 'दुकान बंद',
-      settingsTooltip: 'सेटिंग्स & API कुंजियां',
+      settingsTooltip: 'दुकानदार प्रोफ़ाइल & लॉगआउट (Profile / Logout)',
       guestModeText: 'अतिथि मोड (Guest Mode) • डेटा डिवाइस पर सुरक्षित',
     },
     metrics: {
@@ -311,22 +315,26 @@ export const translations: Record<Language, Translations> = {
       customerNameAlert: 'कृपया ग्राहक का नाम लिखें',
     },
     settingsModal: {
-      title: 'सेटिंग्स & API कॉन्फ़िगरेशन',
-      subtitle: 'Groq Whisper, Google Gemini और Supabase जोड़ें',
-      offlineBadge: 'शून्य कॉन्फ़िगरेशन तैयार:',
-      offlineDesc: 'यदि आप कोई API Key नहीं डालते हैं, तो भी ऐप बिल्ट-इन हिंदी NLP और ब्राउज़र स्पीच इंजन से 100% काम करेगा!',
-      groqLabel: 'Groq Cloud API Key (Whisper Large V3 STT)',
-      groqLink: 'मुफ्त की प्राप्त करें ↗',
-      geminiLabel: 'Google Gemini API Key (Multi-Intent AI Parser)',
-      geminiLink: 'Google AI Studio ↗',
-      supabaseUrlLabel: 'Supabase Project URL (Cloud Sync)',
-      supabaseAnonLabel: 'Supabase Anon Public Key',
+      title: 'दुकानदार प्रोफ़ाइल & खाता',
+      subtitle: 'अपनी दुकान का विवरण देखें और खाता प्रबंधित करें',
+      profileInfo: 'दुकानदार की जानकारी',
+      shopNameLabel: 'दुकान का नाम (Shop Name)',
+      shopNamePlaceholder: 'उदा. राजू टी स्टॉल, गुप्ता किराना',
+      emailLabel: 'ईमेल / खाता पहचान',
+      accountTypeLabel: 'खाता स्थिति',
+      guestBadge: 'अतिथि मोड (डेटा डिवाइस पर सुरक्षित)',
+      cloudBadge: 'क्लाउड खाता सक्रिय (Cloud Synced)',
+      offlineBadge: 'स्थानीय डेटा सुरक्षित:',
+      offlineDesc: 'आपका हिसाब-किताब इस डिवाइस पर सुरक्षित है। किसी API Key की आवश्यकता नहीं है!',
       soundboxTestBtn: 'साउंडबॉक्स आवाज़ टेस्ट करें 🔊',
       testSpeech: 'बहीखाता साउंडबॉक्स परीक्षण सफल रहा। ₹100 प्राप्त हुए।',
       resetBtn: 'सभी स्थानीय डेटा हटाएं (Reset Local Storage)',
-      resetConfirm: 'क्या आप सच में सारा डेटा मिटाना चाहते हैं?',
-      saveBtn: 'सेटिंग्स सुरक्षित करें',
-      saveSuccess: 'सेटिंग्स सुरक्षित हो गईं!',
+      resetConfirm: 'क्या आप सच में सारा डेटा मिटाना चाहते हैं? यह वापस नहीं लाया जा सकेगा।',
+      saveBtn: 'दुकान का नाम सुरक्षित करें',
+      saveSuccess: 'दुकान का नाम सुरक्षित हो गया!',
+      logoutBtn: 'खाता लॉगआउट करें (Log Out)',
+      loginBtn: 'साइन इन / नया खाता बनाएं (Login)',
+      logoutSuccess: 'सफलतापूर्वक लॉगआउट हो गया।',
     },
     landing: {
       navLogin: 'लॉगिन (Login)',
@@ -411,7 +419,7 @@ export const translations: Record<Language, Translations> = {
       soundboxOn: 'Soundbox ON',
       soundboxMute: 'Mute',
       closingBtn: 'Dukaan Bandh',
-      settingsTooltip: 'Settings & API Keys',
+      settingsTooltip: 'Merchant Profile & Logout',
       guestModeText: 'Guest Mode • Data saved locally on this device',
     },
     metrics: {
@@ -514,22 +522,26 @@ export const translations: Record<Language, Translations> = {
       customerNameAlert: 'Please enter customer name',
     },
     settingsModal: {
-      title: 'Settings & API Configuration',
-      subtitle: 'Configure Groq Whisper, Google Gemini & Supabase',
-      offlineBadge: 'Zero Config Ready:',
-      offlineDesc: 'Even without API keys, built-in local Hindi NLP & Web Speech runs 100% offline!',
-      groqLabel: 'Groq Cloud API Key (Whisper Large V3 STT)',
-      groqLink: 'Get Free Key ↗',
-      geminiLabel: 'Google Gemini API Key (Multi-Intent AI Parser)',
-      geminiLink: 'Google AI Studio ↗',
-      supabaseUrlLabel: 'Supabase Project URL (Cloud Sync)',
-      supabaseAnonLabel: 'Supabase Anon Public Key',
+      title: 'Merchant Profile & Account',
+      subtitle: 'Apni dukaan details aur account manage karein',
+      profileInfo: 'Merchant Details',
+      shopNameLabel: 'Dukaan Ka Naam (Shop Name)',
+      shopNamePlaceholder: 'e.g. Raju Tea Stall, Gupta Kirana',
+      emailLabel: 'Email / Account ID',
+      accountTypeLabel: 'Account Status',
+      guestBadge: 'Guest Mode (Data device par safe hai)',
+      cloudBadge: 'Cloud Synced Account',
+      offlineBadge: 'Local Storage Safe:',
+      offlineDesc: 'Aapka hisab-kitab is device par safe hai. Kisi API key ya setup ki zaroorat nahi!',
       soundboxTestBtn: 'Test Soundbox Voice 🔊',
       testSpeech: 'BahiKhaata soundbox test successful. ₹100 praapt hue.',
-      resetBtn: 'Reset All Local Data',
-      resetConfirm: 'Are you sure you want to reset all data?',
-      saveBtn: 'Save Settings',
-      saveSuccess: 'Settings saved successfully!',
+      resetBtn: 'Clear All Local Data (Reset)',
+      resetConfirm: 'Kya aap sach mein saara ledger data delete karna chahte hain?',
+      saveBtn: 'Save Shop Name',
+      saveSuccess: 'Dukaan details save ho gayi!',
+      logoutBtn: 'Logout Karein (Log Out)',
+      loginBtn: 'Sign In / Register',
+      logoutSuccess: 'Logged out successfully.',
     },
     landing: {
       navLogin: 'Login',
@@ -614,7 +626,7 @@ export const translations: Record<Language, Translations> = {
       soundboxOn: 'Soundbox ON',
       soundboxMute: 'Mute',
       closingBtn: 'Day Close',
-      settingsTooltip: 'Settings & API Keys',
+      settingsTooltip: 'Merchant Profile & Logout',
       guestModeText: 'Guest Mode • Data stored securely on this device',
     },
     metrics: {
@@ -717,22 +729,26 @@ export const translations: Record<Language, Translations> = {
       customerNameAlert: 'Please enter customer name',
     },
     settingsModal: {
-      title: 'Settings & Cloud Sync',
-      subtitle: 'Connect Groq Whisper, Google Gemini & Supabase',
-      offlineBadge: 'Zero Config Ready:',
-      offlineDesc: 'Even without custom API keys, built-in offline NLP and speech engines work 100% out of the box!',
-      groqLabel: 'Groq Cloud API Key (Whisper Large V3 Speech-to-Text)',
-      groqLink: 'Get Free Key ↗',
-      geminiLabel: 'Google Gemini API Key (Multi-Intent AI Parser)',
-      geminiLink: 'Google AI Studio ↗',
-      supabaseUrlLabel: 'Supabase Project URL (Cloud Database)',
-      supabaseAnonLabel: 'Supabase Anon Public Key',
+      title: 'Merchant Profile & Account',
+      subtitle: 'Manage your store details and session',
+      profileInfo: 'Merchant Information',
+      shopNameLabel: 'Shop Name',
+      shopNamePlaceholder: 'e.g. Raju Tea Stall, Gupta Kirana',
+      emailLabel: 'Email / Account ID',
+      accountTypeLabel: 'Account Status',
+      guestBadge: 'Guest Mode (Stored securely on this device)',
+      cloudBadge: 'Cloud Synced Account',
+      offlineBadge: 'Local Data Secure:',
+      offlineDesc: 'Your ledger data is securely preserved on this device. No external API keys needed!',
       soundboxTestBtn: 'Test Soundbox Voice 🔊',
       testSpeech: 'BahiKhaata soundbox test successful. Received 100 rupees.',
       resetBtn: 'Clear All Local Data (Reset Storage)',
-      resetConfirm: 'Are you sure you want to clear all ledger data?',
-      saveBtn: 'Save Settings',
-      saveSuccess: 'Settings saved successfully!',
+      resetConfirm: 'Are you sure you want to clear all ledger data? This cannot be undone.',
+      saveBtn: 'Save Shop Name',
+      saveSuccess: 'Store name saved successfully!',
+      logoutBtn: 'Log Out of Account',
+      loginBtn: 'Sign In / Register',
+      logoutSuccess: 'Logged out successfully.',
     },
     landing: {
       navLogin: 'Login',

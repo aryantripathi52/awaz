@@ -1,14 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '@/lib/auth';
-import { Sparkles, ArrowRight, Store, Mail, Lock, Loader2, CheckCircle2, Shield, AlertCircle } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  Store,
+  Mail,
+  Lock,
+  Loader2,
+  CheckCircle2,
+  Shield,
+  AlertCircle,
+  Languages,
+} from 'lucide-react';
 import { soundbox } from '@/lib/soundbox';
+import { translations, Language } from '@/lib/translations';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [language, setLanguage] = useState<Language>('hinglish');
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +29,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedLang = localStorage.getItem('bahikhaata_language') as Language | null;
+      if (savedLang) setLanguage(savedLang);
+    }
+  }, []);
+
+  const cycleLanguage = () => {
+    const nextLang: Language =
+      language === 'hinglish' ? 'hindi' : language === 'hindi' ? 'english' : 'hinglish';
+    setLanguage(nextLang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bahikhaata_language', nextLang);
+      window.dispatchEvent(new CustomEvent('bahikhaata_language_changed', { detail: nextLang }));
+    }
+  };
+
+  const t = translations[language];
+  const tLogin = t.login;
+  const voiceLang = language === 'english' ? 'en-IN' : 'hi-IN';
 
   const handleGoogleLogin = async () => {
     try {
@@ -45,8 +79,19 @@ export default function LoginPage() {
         if (error) {
           setErrorMsg(error.message);
         } else {
-          setSuccessMsg('खाता बन गया! आप सीधे डैशबोर्ड पर जा रहे हैं...');
-          soundbox.speak('खाता सफलतापूर्वक बन गया है।', 'hi-IN');
+          const successText =
+            language === 'english'
+              ? 'Account created! Redirecting to dashboard...'
+              : language === 'hinglish'
+              ? 'Account ban gaya! Dashboard khul raha hai...'
+              : 'खाता बन गया! आप सीधे डैशबोर्ड पर जा रहे हैं...';
+          setSuccessMsg(successText);
+          soundbox.speak(
+            language === 'english'
+              ? 'Account created successfully.'
+              : 'खाता सफलतापूर्वक बन गया है।',
+            voiceLang
+          );
           setTimeout(() => router.push('/dashboard'), 1000);
         }
       } else {
@@ -54,8 +99,17 @@ export default function LoginPage() {
         if (error) {
           setErrorMsg(error.message);
         } else {
-          setSuccessMsg('लॉगिन सफल रहा! डैशबोर्ड खुल रहा है...');
-          soundbox.speak('लॉगिन सफल रहा।', 'hi-IN');
+          const loginText =
+            language === 'english'
+              ? 'Login successful! Opening dashboard...'
+              : language === 'hinglish'
+              ? 'Login safal raha! Dashboard khul raha hai...'
+              : 'लॉगिन सफल रहा! डैशबोर्ड खुल रहा है...';
+          setSuccessMsg(loginText);
+          soundbox.speak(
+            language === 'english' ? 'Login successful.' : 'लॉगिन सफल रहा।',
+            voiceLang
+          );
           setTimeout(() => router.push('/dashboard'), 800);
         }
       }
@@ -74,19 +128,46 @@ export default function LoginPage() {
         JSON.stringify({
           id: 'guest-' + Date.now(),
           email: 'guest@bahikhaata.app',
-          fullName: 'अतिथि दुकानदार (Guest)',
-          shopName: 'मेरी चाय & किराना दुकान',
+          fullName:
+            language === 'english'
+              ? 'Guest Merchant'
+              : language === 'hinglish'
+              ? 'Guest Dukandaar'
+              : 'अतिथि दुकानदार',
+          shopName:
+            language === 'english'
+              ? 'My Tea & Kirana Store'
+              : 'मेरी चाय & किराना दुकान',
         })
       );
     }
-    soundbox.speak('अतिथि मोड में बहीखाता खुल रहा है।', 'hi-IN');
+    soundbox.speak(
+      language === 'english'
+        ? 'Opening ledger in guest mode.'
+        : 'अतिथि मोड में बहीखाता खुल रहा है।',
+      voiceLang
+    );
     router.push('/dashboard');
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 py-8 selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 py-8 selection:bg-emerald-500 selection:text-slate-950 relative">
       {/* Background radial glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      {/* Top bar with language switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <button
+          onClick={cycleLanguage}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-emerald-500/50 transition-all shadow-md active:scale-95"
+        >
+          <Languages className="w-3.5 h-3.5 text-cyan-400" />
+          <span>
+            {language === 'hindi' ? 'हिन्दी' : language === 'hinglish' ? 'Hinglish' : 'English'}
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono">⇄</span>
+        </button>
+      </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Brand Header */}
@@ -97,21 +178,19 @@ export default function LoginPage() {
             </div>
             <div className="text-left">
               <span className="text-xl font-black text-white tracking-tight flex items-center gap-1.5">
-                BahiKhaata
+                {t.common.appName}
                 <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-500/30">
-                  आवाज़
+                  {t.common.badge}
                 </span>
               </span>
-              <p className="text-xs text-slate-400 font-medium">हाथ खाली, हिसाब पक्का</p>
+              <p className="text-xs text-slate-400 font-medium">{t.common.tagline}</p>
             </div>
           </Link>
           <h2 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight mt-3">
-            {mode === 'signin' ? 'दुकानदार लॉगिन' : 'नया बहीखाता बनाएं'}
+            {mode === 'signin' ? tLogin.titleSignIn : tLogin.titleSignUp}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            {mode === 'signin'
-              ? 'अपने खाते में सुरक्षित लॉगिन करें और बोलकर हिसाब रखें'
-              : 'सिर्फ १ मिनट में अपनी दुकान का डिजिटल बहीखाता शुरू करें'}
+            {mode === 'signin' ? tLogin.subSignIn : tLogin.subSignUp}
           </p>
         </div>
 
@@ -120,24 +199,32 @@ export default function LoginPage() {
           {/* Mode Switcher Tabs */}
           <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950/80 rounded-2xl mb-6 border border-slate-800">
             <button
-              onClick={() => { setMode('signin'); setErrorMsg(''); setSuccessMsg(''); }}
+              onClick={() => {
+                setMode('signin');
+                setErrorMsg('');
+                setSuccessMsg('');
+              }}
               className={`py-2 text-xs font-black rounded-xl transition-all ${
                 mode === 'signin'
                   ? 'bg-emerald-500 text-slate-950 shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              साइन इन (Sign In)
+              {tLogin.tabSignIn}
             </button>
             <button
-              onClick={() => { setMode('signup'); setErrorMsg(''); setSuccessMsg(''); }}
+              onClick={() => {
+                setMode('signup');
+                setErrorMsg('');
+                setSuccessMsg('');
+              }}
               className={`py-2 text-xs font-black rounded-xl transition-all ${
                 mode === 'signup'
                   ? 'bg-emerald-500 text-slate-950 shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              नया खाता (Sign Up)
+              {tLogin.tabSignUp}
             </button>
           </div>
 
@@ -162,7 +249,6 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-3 shadow-md transition-transform active:scale-[0.98] mb-4"
           >
-            {/* Google SVG */}
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -181,13 +267,13 @@ export default function LoginPage() {
                 d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
               />
             </svg>
-            <span>Google से जारी रखें (Continue with Google)</span>
+            <span>{tLogin.googleBtn}</span>
           </button>
 
           <div className="relative flex items-center justify-center my-4">
             <div className="border-t border-slate-800 w-full"></div>
             <span className="bg-slate-900 px-3 text-[11px] font-bold text-slate-500 uppercase">
-              या ईमेल से
+              {tLogin.orEmail}
             </span>
             <div className="border-t border-slate-800 w-full"></div>
           </div>
@@ -197,7 +283,7 @@ export default function LoginPage() {
             {mode === 'signup' && (
               <div>
                 <label className="text-xs font-bold text-slate-300 block mb-1">
-                  दुकान का नाम (Shop Name)
+                  {tLogin.shopNameLabel}
                 </label>
                 <div className="relative">
                   <Store className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -205,7 +291,7 @@ export default function LoginPage() {
                     type="text"
                     value={shopName}
                     onChange={(e) => setShopName(e.target.value)}
-                    placeholder="उदा. राजू टी स्टॉल, गुप्ता किराना"
+                    placeholder={tLogin.shopNamePlaceholder}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
@@ -214,7 +300,7 @@ export default function LoginPage() {
 
             <div>
               <label className="text-xs font-bold text-slate-300 block mb-1">
-                ईमेल (Email Address) *
+                {tLogin.emailLabel}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -231,7 +317,7 @@ export default function LoginPage() {
 
             <div>
               <label className="text-xs font-bold text-slate-300 block mb-1">
-                पासवर्ड (Password) *
+                {tLogin.passwordLabel}
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -255,7 +341,7 @@ export default function LoginPage() {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <span>{mode === 'signin' ? 'लॉगिन करें (Sign In)' : 'खाता बनाएं (Create Account)'}</span>
+                  <span>{mode === 'signin' ? tLogin.btnSignIn : tLogin.btnSignUp}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -269,7 +355,7 @@ export default function LoginPage() {
               className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center justify-center gap-1.5 mx-auto group"
             >
               <Sparkles className="w-3.5 h-3.5 text-cyan-400 group-hover:rotate-12 transition-transform" />
-              <span>बिना लॉगिन सीधे चलाएं (Try as Guest)</span>
+              <span>{tLogin.guestBtn}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -278,7 +364,7 @@ export default function LoginPage() {
         {/* Footer Info */}
         <p className="text-center text-[11px] text-slate-500 mt-5 flex items-center justify-center gap-1.5">
           <Shield className="w-3.5 h-3.5 text-emerald-400" />
-          <span>सुरक्षित • 100% स्थानीय डेटा और क्लाउड सिंक</span>
+          <span>{tLogin.footerText}</span>
         </p>
       </div>
     </div>

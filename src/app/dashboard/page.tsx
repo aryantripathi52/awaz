@@ -493,6 +493,10 @@ export default function DashboardPage() {
         onClose={() => setIsSettingsOpen(false)}
         onResetData={handleResetData}
         language={language}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        salesCount={sales.length}
+        creditsCount={credits.length}
       />
 
       <QuickManualAddModal
